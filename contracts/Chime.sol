@@ -5,7 +5,7 @@ import "hardhat/console.sol";
 contract Chime{
 
     constructor{
-            address owner = msg.sender;
+        address owner = msg.sender;
     }
 
     mapping(address => string) private sentMessages;
