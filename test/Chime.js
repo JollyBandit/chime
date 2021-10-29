@@ -18,10 +18,17 @@ describe("Chime", function () {
         chimeContract.addToList(addr4, "Lynn", 2);
     });
 
-        describe("Add friends", function () {
-            it("should add a friend", async function() {
+        describe("Add user and check name", function () {
+            it("should add a user with a name", async function() {
                 expect(await chimeContract.getName(addr3)).equal("Robert");
                 expect(await chimeContract.getName(addr1)).equal("John");
+            });
+        });
+
+        describe("Remove users", function () {
+            it("should remove a user", async function() {
+                await chimeContract.removeFromList(addr3);
+                expect(await chimeContract.getName(addr3)).equal("");
             });
         });
         
