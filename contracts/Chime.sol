@@ -35,6 +35,10 @@ contract Chime{
         list[_addr] = person(_name, _relationship);
     }
 
+    function removeFromList(address _addr) public{
+        delete list[_addr];
+    }
+
     function getName(address _addr) public view returns(string memory _name){
         return list[_addr].name;
     }

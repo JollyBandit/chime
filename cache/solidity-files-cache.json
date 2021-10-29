@@ -72,8 +72,8 @@
       ]
     },
     "H:\\Coding\\Solidity\\chime\\contracts\\Chime.sol": {
-      "lastModificationDate": 1635479904321,
-      "contentHash": "9b3e94d1efb889783a98389b433fffc0",
+      "lastModificationDate": 1635481462054,
+      "contentHash": "52c90c470e8f6193bfacbc8b15b5a03f",
       "sourceName": "contracts/Chime.sol",
       "solcConfig": {
         "version": "0.8.0",
