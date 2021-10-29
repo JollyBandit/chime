@@ -1,11 +1,13 @@
+// SPDX-License-Identifier: MIT
+
 pragma solidity 0.8.0;
 
 import "hardhat/console.sol";
 
 contract Chime{
 
-    constructor{
-        address owner = msg.sender;
+    constructor(){
+        // address owner = msg.sender;
     }
 
     mapping(address => string) private sentMessages;
@@ -13,22 +15,32 @@ contract Chime{
 
     //Friends list & Block list
     mapping(string => address) private friends;
-    address[] private blockList;
-
-    function addFriend(string _name, address _addr) public{
-        friends[_name] = _addr;
+    mapping(string => address) private blockList;
+    
+    enum relationship_type{
+        none,
+        friend,
+        block
     }
 
-    function removeFriend(string _name) public{
-        delete friends[_name];
+    struct person{
+        string name;
+        relationship_type relationship;
     }
 
-    function addBlock(address _addr) public{
-        blockList.add(_addr);
+    //List of friends & blocked users
+    mapping(address => person) public list;
+
+    function addToList(address _addr, string memory _name, relationship_type _relationship) public{
+        list[_addr] = person(_name, _relationship);
     }
 
-    function removeBlock(address _addr) public{
-        blockList.remove(_addr);
+    function getName(address _addr) public view returns(string memory _name){
+        return list[_addr].name;
+    }
+
+    function getRelationship(address _addr) public view returns(relationship_type _relationship){
+        return list[_addr].relationship;
     }
 
     //Send a message to someone
