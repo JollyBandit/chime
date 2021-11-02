@@ -1,0 +1,181 @@
+html{
+  overflow: hidden;
+}
+
+#root{
+  border: solid black 1px;
+  height:100vh;
+}
+
+#content{
+  display: flex;
+}
+
+#sidebar-container{
+  border: solid black 1px;
+  background-color: #e6eff8;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width:400px;
+  height:calc(100vh - 60px);
+}
+
+#browser-servers{
+  border: solid black 1px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 12vh;
+}
+
+#profile{
+  border: solid black 1px;
+  display: flex;
+  /*Set connect button to bottom right of container*/
+  align-items: flex-end;
+  justify-content: flex-end;
+  min-height: 20vh;
+}
+
+#messages-container{
+  display: flex;
+  flex-direction: column;
+  border: solid black 1px;
+  background: rgb(230,239,248);
+  background: linear-gradient(135deg, rgba(230,239,248,1) 0%, rgba(179,225,238,1) 100%);
+  height: calc(100vh - 60px);
+  width:100%;
+}
+
+#messages{
+  overflow-y: scroll;
+  border-bottom: solid black 1px;
+}
+
+.connect-button{
+  border: solid black 1px;
+}
+
+/*Messages already sent and received*/
+
+.message-container{
+  width: 100%;
+}
+
+.message{
+  display: flex;
+  padding: 2.5%;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.message img{
+  border-radius: 314px;
+  max-height: 75px;
+}
+
+.message p{
+  margin-left: 2%;
+}
+
+.message-container:hover{
+  background-color: rgba(22, 24, 12, .2);
+}
+
+/*Send Message bar at bottom of screen*/
+
+#send-message{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #383d1f;
+  min-height: 55px;
+  margin:1.5%;
+  border-radius: 20px;
+}
+
+#send-message p{
+  font-size: 20px;
+  color:#e6eff8;
+  margin: 0 1% 0 1%;
+}
+
+#message-text{
+  color: #e6eff8;
+  width:75%;
+  height:100%;
+  background-color: rgba(0,0,0,0);
+  border: none;
+}
+
+#message-text::placeholder{
+  color:white;
+}
+
+#message-text:focus-visible{
+  border:none;
+  outline: none;
+}
+
+/*Friends*/
+
+#friends-list{
+  overflow-y: scroll;
+  border: solid black 1px;
+  max-height: auto;
+}
+
+.friend-container{
+  display: flex;
+  padding: 2.5%;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.friend-container:hover{
+  background-color: rgba(22, 24, 12, .2);
+}
+
+.friend-container img{
+  border-radius: 314px;
+  max-height: 50px;
+}
+
+.friend-container p{
+  margin-left: 2%;
+}
+
+#top-bar{
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  border: solid black 1px;
+  background-color: #e6eff8;
+  height:60px;
+}
+
+#top-bar input{
+  background-color: rgba(0,0,0,0);
+  color: black;
+  width:75%;
+  border: none;
+}
+
+#top-bar input::placeholder{
+  color:black;
+}
+
+#top-bar input:focus-visible{
+  border:none;
+  outline: none;
+}
+
+#top-bar > *{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: solid black 1px;
+  height: 100%;
+  flex-grow: 1;
+}
