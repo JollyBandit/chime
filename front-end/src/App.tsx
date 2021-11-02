@@ -12,11 +12,6 @@ import { format } from 'path';
 
 function App() {
 
-  const {account, activateBrowserWallet} = useEthers();
-
-  const formatAddress = () => {
-    return shortenIfAddress(account);
-  }
 
   return (
   <DAppProvider config={{
@@ -83,7 +78,7 @@ function App() {
         </section>
         <section id="send-message">
           <p>+</p>
-          <input id="message-text" name="message" type="text" placeholder={"Message "+ formatAddress()} autoComplete = "off"></input>
+          <input id="message-text" name="message" type="text" placeholder="Message" autoComplete = "off"></input>
           <p>@</p>
           <p>%</p>
         </section>
