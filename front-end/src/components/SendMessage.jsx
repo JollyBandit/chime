@@ -3,25 +3,24 @@ import { Button } from "@mui/material";
 
 export let SendMessage = ({ setSendData, sendOnClick }) => {
   const [inputValue, setInputValue] = useState("");
-  const [txUrl, setTxUrl] = useState();
 
   const keyHandler = (event) => {
-    if (event.key === "Enter" && inputValue !== "") {
+    if (event.key === "Enter" && inputValue.trim() !== "") {
       setSendData(inputValue);
+
       //createMessage();
       sendOnClick();
-      console.log(event);
-      setInputValue('');
+      setInputValue("");
     }
   };
 
   const buttonHandler = (event) => {
-    if (inputValue !== "") {
+    if (inputValue !== "" && inputValue.trim() !== ""){
       setSendData(inputValue);
+
       //createMessage();
       sendOnClick();
-      console.log(event);
-      setInputValue('');
+      setInputValue("");
     }
   };
 
@@ -35,18 +34,13 @@ export let SendMessage = ({ setSendData, sendOnClick }) => {
         placeholder="Message"
         autoComplete="off"
         value={inputValue}
-        
-        //setSendData & setInputValue needs refactoring
         onChange={(e) => setSendData(e.target.value)}
         onInput={(e) => setInputValue(e.target.value)}
         onKeyPress={(e) => keyHandler(e)}
       ></input>
       <p>@</p>
       <p>%</p>
-      <a target="_blank" href={txUrl} value={txUrl}>
-        Hello this is a URL
-      </a>
-      <Button onClick={(e) => buttonHandler(e)}>Submit Message</Button>
+      <Button onClick={(e) => buttonHandler(e)}>Submit</Button>
     </section>
   );
 };
