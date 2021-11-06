@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 // import logo from './logo.svg';
 import "./App.css";
+
 import { ChainId, DAppProvider } from "@usedapp/core";
 
 import { ConnectButton } from "./components/ConnectButton";
@@ -10,45 +11,75 @@ import { Friend } from "./components/Friend";
 import { SendMessage } from "./components/SendMessage";
 import * as BigchainDB from "bigchaindb-driver";
 import * as bip39 from "bip39";
+require('dotenv').config();
 
 export default function App() {
-  const [data, setData] = useState("");
   const [sendData, setSendData] = useState("");
   const [messageToCanvas, setMessageToCanvas] = useState([]);
 
-  const sendOnClick = () => {
-    console.log(sendData);
-    setMessageToCanvas([
-      ...messageToCanvas,
-      <Message key={sendData} messageText={sendData} />,
-    ]);
+  // BigchainDB server url
+  const DB_PATH = process.env.REACT_APP_DB_PATH;
+
+  const sendOnClick = async () => {
+    createMessageTx().then((res) => {
+      setMessageToCanvas([messageToCanvas, <Message key={sendData} messageText={res.asset.data.message} txUrl={DB_PATH + "transactions/" + res.id} />,]);
+    });
   };
 
-  //Lookup message on IPDB
-  function getMessage() {
-    try {
-      // BigchainDB server uri
-      const API_PATH = "https://test.ipdb.io/api/v1/";
+  /*Settings Vars*/
+  const disableMessageSharing = true;
+  const burnData = true;
+  const messagingPrivateKey = "MPK";
 
-      // Create a new keypair
-      const userKeyPair = new BigchainDB.Ed25519Keypair(
-        bip39.mnemonicToSeedSync("test").slice(0, 32)
-      );
+  // function sendQueueToBurnAddressOnDisconnect(ownerAddress, dataAddress) {}
 
-      // Send the transaction off to BigchainDB
-      let conn = new BigchainDB.Connection(API_PATH);
+  // function sendDataToDeletionQueue(ownerAddress, dataAddress) {}
 
-      conn
-        .getTransaction(
-          "2029ba858698520dfa743306634a4a8ef164600c6256b899546ba9f9d7f5a24f "
-        )
-        .then((res) => {
-          console.log(res.asset.data.message);
-          setData(res.asset.data.message);
-        });
-    } catch (e) {
-      console.log("BigchainDB failed to post due to: " + e);
-    }
+  //Create a new message and store it on IPDB
+  async function createMessageTx() {
+    // Create a new keypair
+    const userKeyPair = new BigchainDB.Ed25519Keypair(
+      bip39.mnemonicToSeedSync("maff").slice(0, 32)
+    );
+
+    // Construct a transaction payload
+    const tx = BigchainDB.Transaction.makeCreateTransaction(
+      // Define the asset to store IMMUTABLE
+      {
+        user: "User",
+        message: sendData,
+        datetime: new Date().toString(),
+      },
+
+      // Metadata CAN CHANGE LATER
+      {
+        messagingprivatekey: burnData ? messagingPrivateKey.toString() : "",
+        messageshareallowed: disableMessageSharing.toString(),
+      },
+
+      // A transaction needs an output
+      [
+        BigchainDB.Transaction.makeOutput(
+          BigchainDB.Transaction.makeEd25519Condition(userKeyPair.publicKey)
+        ),
+      ],
+      userKeyPair.publicKey
+    );
+
+    // Sign the transaction with private keys
+    const txSigned = BigchainDB.Transaction.signTransaction(
+      tx,
+      userKeyPair.privateKey
+    );
+
+    // Send the transaction off to BigchainDB
+    let conn = new BigchainDB.Connection(DB_PATH);
+
+    let final = conn.postTransactionAsync(txSigned).then((res) => {
+      console.log("Transaction " + res.id + " posted");
+      return(res);
+    });
+    return (final);
   }
 
   return (
@@ -79,7 +110,6 @@ export default function App() {
           </section>
           <section id="friends-list">
             <p>Friends List</p>
-            <button onClick={() => getMessage()}></button>
             <Friend />
             <Friend />
             <Friend />

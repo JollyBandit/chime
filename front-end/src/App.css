@@ -76,6 +76,10 @@ html{
   width: 100%;
 }
 
+.message-container:hover{
+  background-color: rgba(22, 24, 12, .2);
+}
+
 .message{
   display: flex;
   padding: 2.5%;
@@ -90,10 +94,6 @@ html{
 
 .message p{
   margin-left: 2%;
-}
-
-.message-container:hover{
-  background-color: rgba(22, 24, 12, .2);
 }
 
 /*SEND MESSAGE TEXT BAR*/
