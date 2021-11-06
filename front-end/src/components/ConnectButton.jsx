@@ -2,7 +2,7 @@ import { shortenIfAddress, useEthers } from "@usedapp/core";
 import {Button} from "@mui/material";
 
 export const ConnectButton = () => {
-    const {account, activateBrowserWallet} = useEthers();
+    const {account, activateBrowserWallet, deactivate} = useEthers();
 
     const formatAddress = () => {
         return shortenIfAddress(account);
@@ -17,12 +17,13 @@ export const ConnectButton = () => {
         <div>
             {isConnected ?
                 <Button
-                    color="primary" variant="contained" className="connect_button">
+                    color="primary" variant="contained"
+                    onClick={() => deactivate()}>
                     <p>Connected: {formatAddress()}</p>
                 </Button>
                 :
                 <Button
-                    color="primary" variant="contained" className="connect_button"
+                    color="primary" variant="contained"
                     onClick={() => activateBrowserWallet()}>
                     Connect
                 </Button>
