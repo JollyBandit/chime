@@ -1,8 +1,8 @@
-import React, { useState } from "react";
-// import logo from './logo.svg';
+import React, { useEffect, useState } from "react";
 import "./App.css";
 
-import { ChainId, DAppProvider } from "@usedapp/core";
+import { shortenIfAddress, useEtherBalance, useEthers } from "@usedapp/core";
+import { formatEther } from "@ethersproject/units";
 
 import { ConnectButton } from "./components/ConnectButton";
 import { Button } from "@mui/material";
@@ -11,20 +11,81 @@ import { Friend } from "./components/Friend";
 import { SendMessage } from "./components/SendMessage";
 import * as BigchainDB from "bigchaindb-driver";
 import * as bip39 from "bip39";
-require('dotenv').config();
+require("dotenv").config();
 
 export default function App() {
+  const { account, activateBrowserWallet, deactivate } = useEthers();
+  const etherBalance = useEtherBalance(account);
+
   const [sendData, setSendData] = useState("");
+  const [ownerAddress, setOwnerAddress] = useState("");
+
   const [messageToCanvas, setMessageToCanvas] = useState([]);
+  const [friendToCanvas, setFriendToCanvas] = useState([]);
+
+  useEffect(() => {
+    setOwnerAddress(formatAddress());
+  });
 
   // BigchainDB server url
   const DB_PATH = process.env.REACT_APP_DB_PATH;
 
+  const formatAddress = () => {
+    return shortenIfAddress(account);
+  };
+
+  const formatEthBalance = () => {
+    try {
+      return formatEther(etherBalance);
+    } catch (e) {
+      return "";
+    }
+  };
+
   const sendOnClick = async () => {
     createMessageTx().then((res) => {
-      setMessageToCanvas([messageToCanvas, <Message key={sendData} messageText={res.asset.data.message} txUrl={DB_PATH + "transactions/" + res.id} />,]);
+      setMessageToCanvas([
+        messageToCanvas,
+        <Message
+          key={sendData}
+          messageText={res.asset.data.message}
+          txUrl={DB_PATH + "transactions/" + res.id}
+          ownMessage={false}
+        />,
+      ]);
     });
   };
+
+  const connect = () => {
+    activateBrowserWallet();
+    console.log(
+      "The client has been connected, here is their address: " + ownerAddress
+    );
+  };
+
+  const disconnect = () => {
+    deactivate();
+    console.log(
+      "The client has been disconnected, here is their address: " + ownerAddress
+    );
+    // if(disableMessageSharing){
+    //   console.log("Encrypting messages to owner's address");
+    // }
+    // console.log("Encrypt messages");
+    // if(burnData){
+    //   console.log("Sending messages to burn address");
+    // }
+    // else{
+    //   console.log("Storing on BigchainDB");
+    // }
+    // console.log("Delete local data");
+    // console.log("Stop Chime");
+  };
+
+  function addToFriends() {
+    let count = 0;
+    setFriendToCanvas([friendToCanvas, <Friend key={count++} />]);
+  }
 
   /*Settings Vars*/
   const disableMessageSharing = true;
@@ -77,17 +138,33 @@ export default function App() {
 
     let final = conn.postTransactionAsync(txSigned).then((res) => {
       console.log("Transaction " + res.id + " posted");
-      return(res);
+      return res;
     });
-    return (final);
+    return final;
+  }
+
+  //Lookup message on IPDB
+  function getMessage() {
+    try {
+      // Send the transaction off to BigchainDB
+      let conn = new BigchainDB.Connection(DB_PATH);
+
+      conn
+        .listTransactions(
+          "c6275a4ed6442604c6e2e32acb7560ec55dc656f6b09d61ae00e987cd8501570"
+        )
+        .then((res) => {
+          console.log(res.id);
+        });
+    } catch (e) {
+      console.log("BigchainDB failed to post due to: " + e);
+    }
   }
 
   return (
-    <DAppProvider
-      config={{
-        supportedChains: [ChainId.Ropsten],
-      }}
-    >
+    <>
+      {/* Top Bar */}
+
       <section id="top-bar">
         <div id="search">
           <input type="text" placeholder="Search..."></input>
@@ -102,55 +179,46 @@ export default function App() {
           <Button>Notifications</Button>
         </div>
       </section>
+
+      {/* Content Section */}
+
       <section id="content">
         <section id="sidebar-container">
           <section id="browser-servers">
-            <Button>Friends</Button>
-            <Button>Servers</Button>
+            <Button onClick={() => addToFriends()}>Friends</Button>
+            <Button onClick={() => console.log("Server")}>Servers</Button>
+            <Button onClick={() => getMessage()}>Test Get Messages</Button>
           </section>
+
           <section id="friends-list">
-            <p>Friends List</p>
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
+            <div>
+              <p>Friends List</p>
+              {friendToCanvas}
+            </div>
           </section>
+
           <section id="profile">
             <div id="connect-area">
-              <ConnectButton />
               <div>
-                <p>Balance:</p>
-                <p>750 Chime</p>
+                <div id="current-activity">
+                  <p>Currently playing: Starcraft</p>
+                </div>
               </div>
             </div>
             <div>
-              <div id="self-profile">
-                <img src="https://placedog.net/200/200" alt="Me" />
-                <p>Name</p>
-              </div>
-              <div id="current-activity">
-                <p>Currently playing: Starcraft</p>
-              </div>
+              <ConnectButton
+                connect={connect}
+                disconnect={disconnect}
+                ownerAddress={ownerAddress}
+              />
+              <p>
+                {formatEthBalance().substr(0, 6) +
+                  (account !== undefined ? " Ethereum" : "Connect Wallet")}
+              </p>
             </div>
           </section>
         </section>
+
         <section id="messages-container">
           <div>
             <div>{messageToCanvas}</div>
@@ -158,6 +226,6 @@ export default function App() {
           <SendMessage setSendData={setSendData} sendOnClick={sendOnClick} />
         </section>
       </section>
-    </DAppProvider>
+    </>
   );
 }

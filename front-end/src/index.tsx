@@ -3,10 +3,17 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { ChainId, Config, DAppProvider} from '@usedapp/core'
+
+const config: Config={
+  supportedChains: [ChainId.Ropsten],
+}
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <DAppProvider config={config}>
+      <App />
+    </DAppProvider>
   </React.StrictMode>,
   document.getElementById('root')
 );

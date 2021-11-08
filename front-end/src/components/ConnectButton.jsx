@@ -1,33 +1,19 @@
-import { shortenIfAddress, useEthers } from "@usedapp/core";
-import {Button} from "@mui/material";
 
-export const ConnectButton = () => {
-    const {account, activateBrowserWallet, deactivate} = useEthers();
 
-    const formatAddress = () => {
-        return shortenIfAddress(account);
-    }
-
-    //Figure out if we are connected
-    //If not connected. show a connect button
-    //Otherwise just show address
-
-    const isConnected = account !== undefined;
-    return(
-        <div>
-            {isConnected ?
-                <Button
-                    color="primary" variant="contained"
-                    onClick={() => deactivate()}>
-                    <p>Connected: {formatAddress()}</p>
-                </Button>
-                :
-                <Button
-                    color="primary" variant="contained"
-                    onClick={() => activateBrowserWallet()}>
-                    Connect
-                </Button>
-            }
-        </div>
-    )
-}
+export const ConnectButton = ({ connect, disconnect, ownerAddress }) => {
+  const isConnected = ownerAddress !== "";
+  return (
+    <div>
+      {isConnected ? (
+        <button className="self-profile" onClick={() => disconnect()}>
+          <img src="https://placedog.net/200/200" alt="Me" />
+          <p>{ownerAddress}</p>
+        </button>
+      ) : (
+        <button className="self-profile" onClick={() => connect()}>
+          <p>Connect</p>
+        </button>
+      )}
+    </div>
+  );
+};
