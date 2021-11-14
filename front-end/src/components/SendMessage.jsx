@@ -1,32 +1,29 @@
 import React, { useState } from "react";
-import { Button } from "@mui/material";
 
-export let SendMessage = ({ setSendData, sendOnClick }) => {
+export const SendMessage = ({ sendMessage }) => {
   const [inputValue, setInputValue] = useState("");
 
   const keyHandler = (event) => {
     if (event.key === "Enter" && inputValue.trim() !== "") {
-      setSendData(inputValue);
 
       //createMessage();
-      sendOnClick();
+      sendMessage(inputValue, new Date().toString());
       setInputValue("");
     }
   };
 
   const buttonHandler = (event) => {
-    if (inputValue !== "" && inputValue.trim() !== ""){
-      setSendData(inputValue);
+    if (inputValue.trim() !== ""){
 
       //createMessage();
-      sendOnClick();
+      sendMessage(inputValue, new Date().toString());
       setInputValue("");
     }
   };
 
   return (
     <section id="send-message">
-      <p>+</p>
+      <button id="add-file" onClick={() => console.log("Add File")}>+</button>
       <input
         id="message-text"
         name="message"
@@ -34,13 +31,13 @@ export let SendMessage = ({ setSendData, sendOnClick }) => {
         placeholder="Message"
         autoComplete="off"
         value={inputValue}
-        onChange={(e) => setSendData(e.target.value)}
+        onChange={(e) => setInputValue(e.target.value)}
         onInput={(e) => setInputValue(e.target.value)}
         onKeyPress={(e) => keyHandler(e)}
       ></input>
-      <p>@</p>
-      <p>%</p>
-      <Button onClick={(e) => buttonHandler(e)}>Submit</Button>
+      <button id="chainlink-feeds" onClick={() => console.log("Open pricefeed selection")}>&#x2B21;</button>
+      <button id="pick-emoji" onClick={() => console.log("Pick emoji")}>&#x1F60A;</button>
+      <button id="message-submit" onClick={(e) => buttonHandler(e)}>Submit</button>
     </section>
   );
 };

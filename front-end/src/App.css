@@ -65,7 +65,7 @@ html{
   background: rgb(230,239,248);
   background: rgba(0,0,0,0);
   height: calc(100vh - 60px);
-  flex-grow: 1;
+  flex: 3;
 }
 
 #messages-container > div{
@@ -86,23 +86,47 @@ html{
 
 .message{
   display: flex;
-  flex-grow: 1;
   padding: 2.5%;
-  justify-content: flex-start;
-  align-items: center;
 }
 
 .message:hover{
   background-color: rgba(22, 24, 12, .2);
 }
 
+.message p{
+  margin: 0;
+}
+
 .message img{
   border-radius: 314px;
   max-height: 75px;
+  margin: 0 1em 0 0;
 }
 
-.message p{
-  margin-left: 2%;
+/*The div that holds message profile*/
+.message > div{
+  display: flex;
+  flex-direction: column;
+}
+
+.message div div{
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 1em;
+}
+
+#messageID{
+  margin: 0 1em 0 0;
+}
+
+#messageDate{
+  font-size: .7em;
+  font-style: italic;
+}
+
+#messageText{
+  word-break: break-word;
 }
 
 .message.own{
@@ -124,7 +148,58 @@ html{
   background-color: #383d1f;
   min-height: 50px;
   margin:1.5%;
+  padding: 0 1% 0 1%;
   border-radius: 20px;
+}
+
+#send-message button{
+  font-size: 1.2em;
+  background-color: rgba(255, 255, 255, 0);
+  color: rgba(255, 255, 255, .5);
+  border: none;
+}
+
+#send-message #add-file{
+  background-color: rgba(255, 255, 255, .5);
+  color:#383d1f;
+  border-radius: 314px;
+}
+
+#send-message #add-file:hover{
+  background-color: rgba(255, 255, 255, .8);
+}
+
+#send-message #chainlink-feeds{
+  font-size: 2em;
+  font-weight: 900;
+  letter-spacing:1px;
+}
+
+#send-message #chainlink-feeds:hover{
+  font-size: 2em;
+  font-weight: 900;
+  color: rgba(55, 91, 210, 1);
+  text-shadow: 1px 0 rgba(55, 91, 210, 1);
+  letter-spacing:1px;
+}
+
+#send-message #pick-emoji{
+  filter: grayscale();
+  transform: scale(1.2);
+}
+
+#send-message #pick-emoji:hover{
+  filter: none;
+  color: rgba(255, 255, 255, 1);
+  transform: scale(1.4);
+}
+
+#send-message #message-submit{
+
+}
+
+#send-message #message-submit:hover{
+  color: rgba(255, 255, 255, .8);
 }
 
 #send-message p{
@@ -157,8 +232,8 @@ html{
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  width:400px;
   height:calc(100vh - 60px);
+  flex: 1;
 }
 
 /*BBROWSER SERVERS*/

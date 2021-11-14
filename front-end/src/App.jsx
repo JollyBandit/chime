@@ -13,26 +13,86 @@ import * as BigchainDB from "bigchaindb-driver";
 import * as bip39 from "bip39";
 require("dotenv").config();
 
+const IPFS = require('ipfs');
+const OrbitDB = require('orbit-db');
+
+const ENTROPY = process.env.REACT_APP_ENTROPY;
+
+//Database Instance
+let db;
+
 export default function App() {
   const { account, activateBrowserWallet, deactivate } = useEthers();
   const etherBalance = useEtherBalance(account);
 
-  const [sendData, setSendData] = useState("");
   const [ownerAddress, setOwnerAddress] = useState("");
 
   const [messageToCanvas, setMessageToCanvas] = useState([]);
   const [friendToCanvas, setFriendToCanvas] = useState([]);
 
+  //Initialize IPFS
   useEffect(() => {
-    setOwnerAddress(formatAddress());
-  });
+    // Create a new keypair
+    const userKeyPair = new BigchainDB.Ed25519Keypair(
+      bip39.mnemonicToSeedSync(ENTROPY).slice(0, 32)
+    );
+    console.log('./orbitdb/'+ userKeyPair.publicKey);
 
-  // BigchainDB server url
-  const DB_PATH = process.env.REACT_APP_DB_PATH;
+    async function ipfsInit(){
+      try {
+        if(db === undefined){
+          console.log("Starting IPFS...")
+          const ipfs = await IPFS.create({
+            repo: './ipfs',
+            start: true,
+            EXPERIMENTAL: {
+              pubsub: true,
+            },
+          })
+          const orbitdb = await OrbitDB.createInstance(ipfs, {
+            directory: './orbitdb/'+ userKeyPair.publicKey
+          })
+          console.log("IPFS Initialized")
+          db = await orbitdb.feed(userKeyPair.toString(), { overwrite: true })
+        }
+        await db.load()
+      } catch (e) {
+        console.error(e)
+      }
+    }
 
-  const formatAddress = () => {
-    return shortenIfAddress(account);
-  };
+    async function loadMessages(){
+      let messagesArr;
+      try{
+        await db.iterator({ limit: -1 }).collect().map((e) => {
+            messagesArr =
+            [
+            messagesArr,
+            <Message
+              key={e.payload.value.date}
+              pData={e.payload.value}
+              ownMessage={false}
+              messageClicked={(msgData) => messageClicked(msgData.pData)}
+            />,
+            ]
+          }
+        );
+        setMessageToCanvas(messagesArr);
+      }
+      catch(err){
+        console.log(err);
+      }
+    }
+
+    //LOAD MESSAGES
+    ipfsInit().then(() => {
+      loadMessages();
+    });
+  }, [])
+
+  useEffect(() => {
+    setOwnerAddress(shortenIfAddress(account));
+  }, [account]);
 
   const formatEthBalance = () => {
     try {
@@ -42,19 +102,38 @@ export default function App() {
     }
   };
 
-  const sendOnClick = async () => {
-    createMessageTx().then((res) => {
+  const addMessage = async (messageText, messageDate) => {
+    try{
+      await db.add({ message: messageText, date: messageDate });
+      const postedData = await db.iterator({ limit: 1 }).collect().map((e) => e.payload.value);
+      const pData = postedData[0];
+      console.log(pData);
+
+      //Add a new message to the app
       setMessageToCanvas([
         messageToCanvas,
         <Message
-          key={sendData}
-          messageText={res.asset.data.message}
-          txUrl={DB_PATH + "transactions/" + res.id}
+          key={pData.date}
+          pData={pData}
           ownMessage={false}
+          messageClicked={(msgData) => messageClicked(msgData.pData)}
         />,
       ]);
-    });
+    }
+    catch(err){
+      console.log(err);
+    }
   };
+
+  function messageClicked(pData){
+    try {
+      // const itemsArr = [...db.iterator({ limit: -1} ).collect().map(e => e.payload.value.date)];
+      console.log(pData);
+      // console.log(itemsArr.filter(word => Date.parse(word)));
+    } catch (e) {
+      console.error(e)
+    }
+  }
 
   const connect = () => {
     activateBrowserWallet();
@@ -88,78 +167,13 @@ export default function App() {
   }
 
   /*Settings Vars*/
-  const disableMessageSharing = true;
-  const burnData = true;
-  const messagingPrivateKey = "MPK";
+  // const disableMessageSharing = true;
+  // const burnData = true;
+  // const messagingPrivateKey = "MPK";
 
   // function sendQueueToBurnAddressOnDisconnect(ownerAddress, dataAddress) {}
 
   // function sendDataToDeletionQueue(ownerAddress, dataAddress) {}
-
-  //Create a new message and store it on IPDB
-  async function createMessageTx() {
-    // Create a new keypair
-    const userKeyPair = new BigchainDB.Ed25519Keypair(
-      bip39.mnemonicToSeedSync("maff").slice(0, 32)
-    );
-
-    // Construct a transaction payload
-    const tx = BigchainDB.Transaction.makeCreateTransaction(
-      // Define the asset to store IMMUTABLE
-      {
-        user: "User",
-        message: sendData,
-        datetime: new Date().toString(),
-      },
-
-      // Metadata CAN CHANGE LATER
-      {
-        messagingprivatekey: burnData ? messagingPrivateKey.toString() : "",
-        messageshareallowed: disableMessageSharing.toString(),
-      },
-
-      // A transaction needs an output
-      [
-        BigchainDB.Transaction.makeOutput(
-          BigchainDB.Transaction.makeEd25519Condition(userKeyPair.publicKey)
-        ),
-      ],
-      userKeyPair.publicKey
-    );
-
-    // Sign the transaction with private keys
-    const txSigned = BigchainDB.Transaction.signTransaction(
-      tx,
-      userKeyPair.privateKey
-    );
-
-    // Send the transaction off to BigchainDB
-    let conn = new BigchainDB.Connection(DB_PATH);
-
-    let final = conn.postTransactionAsync(txSigned).then((res) => {
-      console.log("Transaction " + res.id + " posted");
-      return res;
-    });
-    return final;
-  }
-
-  //Lookup message on IPDB
-  function getMessage() {
-    try {
-      // Send the transaction off to BigchainDB
-      let conn = new BigchainDB.Connection(DB_PATH);
-
-      conn
-        .listTransactions(
-          "c6275a4ed6442604c6e2e32acb7560ec55dc656f6b09d61ae00e987cd8501570"
-        )
-        .then((res) => {
-          console.log(res.id);
-        });
-    } catch (e) {
-      console.log("BigchainDB failed to post due to: " + e);
-    }
-  }
 
   return (
     <>
@@ -186,8 +200,7 @@ export default function App() {
         <section id="sidebar-container">
           <section id="browser-servers">
             <Button onClick={() => addToFriends()}>Friends</Button>
-            <Button onClick={() => console.log("Server")}>Servers</Button>
-            <Button onClick={() => getMessage()}>Test Get Messages</Button>
+            <Button onClick={() => console.log(db.address.root)}>Servers</Button>
           </section>
 
           <section id="friends-list">
@@ -223,7 +236,7 @@ export default function App() {
           <div>
             <div>{messageToCanvas}</div>
           </div>
-          <SendMessage setSendData={setSendData} sendOnClick={sendOnClick} />
+          <SendMessage sendMessage={(messageText, messageDate) => addMessage(messageText, messageDate)} />
         </section>
       </section>
     </>
