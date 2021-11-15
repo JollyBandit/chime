@@ -1,8 +1,8 @@
-import React, { useState } from "react";
-// import logo from './logo.svg';
+import React, { useEffect, useState } from "react";
 import "./App.css";
 
-import { ChainId, DAppProvider } from "@usedapp/core";
+import { shortenIfAddress, useEtherBalance, useEthers } from "@usedapp/core";
+import { formatEther } from "@ethersproject/units";
 
 import { ConnectButton } from "./components/ConnectButton";
 import { Button } from "@mui/material";
@@ -11,83 +11,174 @@ import { Friend } from "./components/Friend";
 import { SendMessage } from "./components/SendMessage";
 import * as BigchainDB from "bigchaindb-driver";
 import * as bip39 from "bip39";
-require('dotenv').config();
+require("dotenv").config();
+
+const IPFS = require('ipfs');
+const OrbitDB = require('orbit-db');
+
+const ENTROPY = process.env.REACT_APP_ENTROPY;
+
+//Database Instance
+let db;
 
 export default function App() {
-  const [sendData, setSendData] = useState("");
+  const { account, activateBrowserWallet, deactivate } = useEthers();
+  const etherBalance = useEtherBalance(account);
+
+  const [ownerAddress, setOwnerAddress] = useState("");
+
   const [messageToCanvas, setMessageToCanvas] = useState([]);
+  const [friendToCanvas, setFriendToCanvas] = useState([]);
 
-  // BigchainDB server url
-  const DB_PATH = process.env.REACT_APP_DB_PATH;
+  //Initialize IPFS
+  useEffect(() => {
+    // Create a new keypair
+    const userKeyPair = new BigchainDB.Ed25519Keypair(
+      bip39.mnemonicToSeedSync(ENTROPY).slice(0, 32)
+    );
+    console.log('./orbitdb/'+ userKeyPair.publicKey);
 
-  const sendOnClick = async () => {
-    createMessageTx().then((res) => {
-      setMessageToCanvas([messageToCanvas, <Message key={sendData} messageText={res.asset.data.message} txUrl={DB_PATH + "transactions/" + res.id} />,]);
+    async function ipfsInit(){
+      try {
+        if(db === undefined){
+          console.log("Starting IPFS...")
+          const ipfs = await IPFS.create({
+            repo: './ipfs',
+            start: true,
+            EXPERIMENTAL: {
+              pubsub: true,
+            },
+          })
+          const orbitdb = await OrbitDB.createInstance(ipfs, {
+            directory: './orbitdb/'+ userKeyPair.publicKey
+          })
+          console.log("IPFS Initialized")
+          db = await orbitdb.feed(userKeyPair.toString(), { overwrite: true })
+        }
+        await db.load()
+      } catch (e) {
+        console.error(e)
+      }
+    }
+
+    async function loadMessages(){
+      let messagesArr;
+      try{
+        await db.iterator({ limit: -1 }).collect().map((e) => {
+            messagesArr =
+            [
+            messagesArr,
+            <Message
+              key={e.payload.value.date}
+              pData={e.payload.value}
+              ownMessage={false}
+              messageClicked={(msgData) => messageClicked(msgData.pData)}
+            />,
+            ]
+          }
+        );
+        setMessageToCanvas(messagesArr);
+      }
+      catch(err){
+        console.log(err);
+      }
+    }
+
+    //LOAD MESSAGES
+    ipfsInit().then(() => {
+      loadMessages();
     });
+  }, [])
+
+  useEffect(() => {
+    setOwnerAddress(shortenIfAddress(account));
+  }, [account]);
+
+  const formatEthBalance = () => {
+    try {
+      return formatEther(etherBalance);
+    } catch (e) {
+      return "";
+    }
   };
 
+  const addMessage = async (messageText, messageDate) => {
+    try{
+      await db.add({ message: messageText, date: messageDate });
+      const postedData = await db.iterator({ limit: 1 }).collect().map((e) => e.payload.value);
+      const pData = postedData[0];
+      console.log(pData);
+
+      //Add a new message to the app
+      setMessageToCanvas([
+        messageToCanvas,
+        <Message
+          key={pData.date}
+          pData={pData}
+          ownMessage={false}
+          messageClicked={(msgData) => messageClicked(msgData.pData)}
+        />,
+      ]);
+    }
+    catch(err){
+      console.log(err);
+    }
+  };
+
+  function messageClicked(pData){
+    try {
+      // const itemsArr = [...db.iterator({ limit: -1} ).collect().map(e => e.payload.value.date)];
+      console.log(pData);
+      // console.log(itemsArr.filter(word => Date.parse(word)));
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const connect = () => {
+    activateBrowserWallet();
+    console.log(
+      "The client has been connected, here is their address: " + ownerAddress
+    );
+  };
+
+  const disconnect = () => {
+    deactivate();
+    console.log(
+      "The client has been disconnected, here is their address: " + ownerAddress
+    );
+    // if(disableMessageSharing){
+    //   console.log("Encrypting messages to owner's address");
+    // }
+    // console.log("Encrypt messages");
+    // if(burnData){
+    //   console.log("Sending messages to burn address");
+    // }
+    // else{
+    //   console.log("Storing on BigchainDB");
+    // }
+    // console.log("Delete local data");
+    // console.log("Stop Chime");
+  };
+
+  function addToFriends() {
+    let count = 0;
+    setFriendToCanvas([friendToCanvas, <Friend key={count++} />]);
+  }
+
   /*Settings Vars*/
-  const disableMessageSharing = true;
-  const burnData = true;
-  const messagingPrivateKey = "MPK";
+  // const disableMessageSharing = true;
+  // const burnData = true;
+  // const messagingPrivateKey = "MPK";
 
   // function sendQueueToBurnAddressOnDisconnect(ownerAddress, dataAddress) {}
 
   // function sendDataToDeletionQueue(ownerAddress, dataAddress) {}
 
-  //Create a new message and store it on IPDB
-  async function createMessageTx() {
-    // Create a new keypair
-    const userKeyPair = new BigchainDB.Ed25519Keypair(
-      bip39.mnemonicToSeedSync("maff").slice(0, 32)
-    );
-
-    // Construct a transaction payload
-    const tx = BigchainDB.Transaction.makeCreateTransaction(
-      // Define the asset to store IMMUTABLE
-      {
-        user: "User",
-        message: sendData,
-        datetime: new Date().toString(),
-      },
-
-      // Metadata CAN CHANGE LATER
-      {
-        messagingprivatekey: burnData ? messagingPrivateKey.toString() : "",
-        messageshareallowed: disableMessageSharing.toString(),
-      },
-
-      // A transaction needs an output
-      [
-        BigchainDB.Transaction.makeOutput(
-          BigchainDB.Transaction.makeEd25519Condition(userKeyPair.publicKey)
-        ),
-      ],
-      userKeyPair.publicKey
-    );
-
-    // Sign the transaction with private keys
-    const txSigned = BigchainDB.Transaction.signTransaction(
-      tx,
-      userKeyPair.privateKey
-    );
-
-    // Send the transaction off to BigchainDB
-    let conn = new BigchainDB.Connection(DB_PATH);
-
-    let final = conn.postTransactionAsync(txSigned).then((res) => {
-      console.log("Transaction " + res.id + " posted");
-      return(res);
-    });
-    return (final);
-  }
-
   return (
-    <DAppProvider
-      config={{
-        supportedChains: [ChainId.Ropsten],
-      }}
-    >
+    <>
+      {/* Top Bar */}
+
       <section id="top-bar">
         <div id="search">
           <input type="text" placeholder="Search..."></input>
@@ -102,62 +193,52 @@ export default function App() {
           <Button>Notifications</Button>
         </div>
       </section>
+
+      {/* Content Section */}
+
       <section id="content">
         <section id="sidebar-container">
           <section id="browser-servers">
-            <Button>Friends</Button>
-            <Button>Servers</Button>
+            <Button onClick={() => addToFriends()}>Friends</Button>
+            <Button onClick={() => console.log(db.address.root)}>Servers</Button>
           </section>
+
           <section id="friends-list">
-            <p>Friends List</p>
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
-            <Friend />
+            <div>
+              <p>Friends List</p>
+              {friendToCanvas}
+            </div>
           </section>
+
           <section id="profile">
             <div id="connect-area">
-              <ConnectButton />
               <div>
-                <p>Balance:</p>
-                <p>750 Chime</p>
+                <div id="current-activity">
+                  <p>Currently playing: Starcraft</p>
+                </div>
               </div>
             </div>
             <div>
-              <div id="self-profile">
-                <img src="https://placedog.net/200/200" alt="Me" />
-                <p>Name</p>
-              </div>
-              <div id="current-activity">
-                <p>Currently playing: Starcraft</p>
-              </div>
+              <ConnectButton
+                connect={connect}
+                disconnect={disconnect}
+                ownerAddress={ownerAddress}
+              />
+              <p>
+                {formatEthBalance().substr(0, 6) +
+                  (account !== undefined ? " Ethereum" : "Connect Wallet")}
+              </p>
             </div>
           </section>
         </section>
+
         <section id="messages-container">
           <div>
             <div>{messageToCanvas}</div>
           </div>
-          <SendMessage setSendData={setSendData} sendOnClick={sendOnClick} />
+          <SendMessage sendMessage={(messageText, messageDate) => addMessage(messageText, messageDate)} />
         </section>
       </section>
-    </DAppProvider>
+    </>
   );
 }

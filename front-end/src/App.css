@@ -3,7 +3,8 @@ html{
 }
 
 #root{
-  border: solid black 1px;
+  background: rgb(230,239,248);
+  background: radial-gradient(circle, rgba(230,239,248,1) 0%, rgba(179,225,238,1) 150%);
   height:100vh;
 }
 
@@ -17,8 +18,12 @@ html{
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  background-color: #e6eff8;
+  background: rgba(0,0,0,0);
   height:60px;
+}
+
+#top-bar:hover{
+  outline: solid black 1px;
 }
 
 #top-bar input{
@@ -58,42 +63,80 @@ html{
   flex-direction: column;
   justify-content: flex-end;
   background: rgb(230,239,248);
-  background: linear-gradient(135deg, rgba(230,239,248,1) 0%, rgba(179,225,238,1) 100%);
+  background: rgba(0,0,0,0);
   height: calc(100vh - 60px);
-  width: 75vw;
+  flex: 3;
 }
 
 #messages-container > div{
   display: flex;
   flex-direction: column-reverse;
-  overflow-y: scroll;
   height:100%;
+  overflow-y: auto;
+  visibility: hidden;
+}
+
+#messages-container > div > div,
+#messages-container > div:hover,
+#messages-container > div:focus {
+  visibility: visible;
 }
 
 /*MESSAGE DISPLAY*/
 
-.message-container{
-  width: 100%;
-}
-
-.message-container:hover{
-  background-color: rgba(22, 24, 12, .2);
-}
-
 .message{
   display: flex;
   padding: 2.5%;
-  justify-content: flex-start;
-  align-items: center;
+}
+
+.message:hover{
+  background-color: rgba(22, 24, 12, .2);
+}
+
+.message p{
+  margin: 0;
 }
 
 .message img{
   border-radius: 314px;
   max-height: 75px;
+  margin: 0 1em 0 0;
 }
 
-.message p{
-  margin-left: 2%;
+/*The div that holds message profile*/
+.message > div{
+  display: flex;
+  flex-direction: column;
+}
+
+.message div div{
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 1em;
+}
+
+#messageID{
+  margin: 0 1em 0 0;
+}
+
+#messageDate{
+  font-size: .7em;
+  font-style: italic;
+}
+
+#messageText{
+  word-break: break-word;
+}
+
+.message.own{
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: flex-start;
+}
+
+.message.own p{
+  margin-right: 2%;
 }
 
 /*SEND MESSAGE TEXT BAR*/
@@ -105,7 +148,58 @@ html{
   background-color: #383d1f;
   min-height: 50px;
   margin:1.5%;
+  padding: 0 1% 0 1%;
   border-radius: 20px;
+}
+
+#send-message button{
+  font-size: 1.2em;
+  background-color: rgba(255, 255, 255, 0);
+  color: rgba(255, 255, 255, .5);
+  border: none;
+}
+
+#send-message #add-file{
+  background-color: rgba(255, 255, 255, .5);
+  color:#383d1f;
+  border-radius: 314px;
+}
+
+#send-message #add-file:hover{
+  background-color: rgba(255, 255, 255, .8);
+}
+
+#send-message #chainlink-feeds{
+  font-size: 2em;
+  font-weight: 900;
+  letter-spacing:1px;
+}
+
+#send-message #chainlink-feeds:hover{
+  font-size: 2em;
+  font-weight: 900;
+  color: rgba(55, 91, 210, 1);
+  text-shadow: 1px 0 rgba(55, 91, 210, 1);
+  letter-spacing:1px;
+}
+
+#send-message #pick-emoji{
+  filter: grayscale();
+  transform: scale(1.2);
+}
+
+#send-message #pick-emoji:hover{
+  filter: none;
+  color: rgba(255, 255, 255, 1);
+  transform: scale(1.4);
+}
+
+#send-message #message-submit{
+
+}
+
+#send-message #message-submit:hover{
+  color: rgba(255, 255, 255, .8);
 }
 
 #send-message p{
@@ -134,29 +228,45 @@ html{
 /*SIDEBAR CONTAINER*/
 
 #sidebar-container{
-  background-color: #e6eff8;
+  background: rgba(0,0,0,0);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  width:400px;
   height:calc(100vh - 60px);
+  flex: 1;
 }
 
 /*BBROWSER SERVERS*/
 
 #browser-servers{
-  border: solid black 1px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   min-height: 12vh;
 }
 
+#browser-servers:hover{
+  outline: solid black 1px;
+}
+
 /*FRIENDS*/
 
 #friends-list{
-  overflow-y: scroll;
-  max-height: auto;
+  flex-grow: 1;
+  overflow-y: auto;
+  visibility: hidden;
+}
+
+#friends-list > div{
+  display: flex;
+  flex-direction: column;
+  height:100%;
+}
+
+#friends-list div,
+#friends-list:hover,
+#friends-list:focus {
+  visibility: visible;
 }
 
 /*Temporary*/
@@ -188,12 +298,15 @@ html{
 /*PROFILE*/
 
 #profile{
-  border: solid black 1px;
   display: flex;
   /*Set connect button to bottom right of container*/
   align-items: flex-start;
   justify-content: flex-end;
   min-height: 20vh;
+}
+
+#profile:hover{
+  outline: solid black 1px;
 }
 
 /*Both divs inside profile container*/
@@ -218,22 +331,49 @@ html{
   border-radius: 314px;
 }
 
-#self-profile{
+.self-profile{
   display: flex;
   flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
   width:100%;
-}
-
-#self-profile:hover{
-  background-color: rgba(22, 24, 12, .2);
+  height: 50px;
   border-radius: 314px;
+  background-color: rgba(179,225,238,1);
+  border: none;
+  padding: 0;
 }
 
-#self-profile img{
+.self-profile:hover{
+  background-color: rgba(22, 24, 12, .2);
+}
+
+.self-profile img{
   border-radius: 314px;
   max-height: 50px;
 }
 
-#self-profile p{
-  margin-left: 2%;
+.self-profile p{
+  flex-grow: 1;
+  margin: 0 2% 0 2%;
+}
+
+/* width */
+::-webkit-scrollbar {
+  width: 7px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: rgba(77, 77, 82, .5); 
+}
+ 
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: rgba(22, 24, 12, .2); 
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(22, 24, 12, .4); 
 }
