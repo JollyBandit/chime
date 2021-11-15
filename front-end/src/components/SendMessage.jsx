@@ -1,14 +1,12 @@
 import React, { useState } from "react";
-require("dotenv").config();
-
-const API_KEY = process.env.REACT_APP_INFURA_API_KEY;
 
 export const SendMessage = ({ sendMessage }) => {
   const [inputValue, setInputValue] = useState("");
   const { ethers } = require("ethers")
+  const API_KEY = process.env.REACT_APP_KOVAN_API_KEY;
 
-  const keyHandler = (event) => {
-    if (event.key === "Enter" && inputValue.trim() !== "") {
+  const keyHandler = (e) => {
+    if (e.key === "Enter" && inputValue.trim() !== "") {
 
       //createMessage();
       sendMessage(inputValue, new Date().toString());
@@ -16,7 +14,7 @@ export const SendMessage = ({ sendMessage }) => {
     }
   };
 
-  const buttonHandler = (event) => {
+  const buttonHandler = (e) => {
     if (inputValue.trim() !== ""){
 
       //createMessage();
@@ -26,7 +24,7 @@ export const SendMessage = ({ sendMessage }) => {
   };
 
   const priceFeed = () => {
-    const provider = new ethers.providers.JsonRpcProvider("https://kovan.infura.io/v3/08b75c4569f541e4835952ffa1f10640");
+    const provider = new ethers.providers.JsonRpcProvider(API_KEY);
     const aggregatorV3InterfaceABI = [
       {
         inputs: [],
@@ -81,9 +79,18 @@ export const SendMessage = ({ sendMessage }) => {
     priceFeed.latestRoundData()
         .then((roundData) => {
             // Do something with roundData
-            console.log("Latest Round Data", roundData)
+            console.log(roundData)
         })
 
+  }
+
+  function createMessageContext(e){
+    if(e.target.value.length >= 3){
+      console.log("Open message context");
+    }
+    else{
+      console.log("Close message context");
+    }
   }
 
   return (
@@ -97,7 +104,7 @@ export const SendMessage = ({ sendMessage }) => {
         autoComplete="off"
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}
-        onInput={(e) => setInputValue(e.target.value)}
+        onInput={(e) => createMessageContext(e)}
         onKeyPress={(e) => keyHandler(e)}
       ></input>
       <button id="chainlink-feeds" onClick={() => priceFeed()}>&#x2B21;</button>

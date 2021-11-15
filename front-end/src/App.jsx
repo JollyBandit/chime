@@ -11,7 +11,6 @@ import { Friend } from "./components/Friend";
 import { SendMessage } from "./components/SendMessage";
 import * as BigchainDB from "bigchaindb-driver";
 import * as bip39 from "bip39";
-require("dotenv").config();
 
 const IPFS = require('ipfs');
 const OrbitDB = require('orbit-db');
