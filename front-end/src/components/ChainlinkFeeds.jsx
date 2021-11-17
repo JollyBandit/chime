@@ -1,7 +1,39 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { TokenFeed } from './TokenFeed'
+const { ethers } = require("ethers")
 
 export const ChainlinkFeeds = (props) => {
+    const [tokenFeed, setTokenFeed] = useState([]);
+
+    useEffect(() => {
+        if(tokenFeed.length === 0)
+        {
+            let promises = [];
+            tokenAddr.forEach((val) => {
+                promises.push(priceFeed(val));
+            })
+        
+            Promise.all(promises)
+            .then((roundDataArr) => {
+                let i = 0;
+                let tokenFeedArr = [];
+                roundDataArr.forEach(roundData => {
+                    tokenFeedArr.push(
+                        <TokenFeed
+                        key={tokenAddrArr[i].key}
+                        onClick={() => props.value(ethers.BigNumber.from(roundData.answer._hex).toBigInt().toString())}
+                        tokenName={tokenAddrArr[i].key}
+                        tokenPrice={ethers.BigNumber.from(roundData.answer._hex).toBigInt().toString()}
+                    />
+                    );
+                    i++;
+                });
+                setTokenFeed(tokenFeedArr);
+            })
+        }
+    })
+
+    const MAINNET_API_KEY = process.env.REACT_APP_MAINNET_API_KEY
 
     const tokenAddr = new Map();
     tokenAddr.set("BTC", "0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c")
@@ -21,22 +53,66 @@ export const ChainlinkFeeds = (props) => {
     tokenAddr.set("SUSHI", "0xCc70F09A6CC17553b2E31954cD36E4A2d89501f7")
     tokenAddr.set("XRP", "0xCed2660c6Dd1Ffd856A5A82C67f3482d88C50b12")
 
-    let tokenFeedArr = [];
-    tokenAddr.forEach((val, key) => {
-        tokenFeedArr.push(
-            <TokenFeed
-            key={key}
-            onClick={() => props.tokenAddress(val)}
-            tokenName={key}
-            tokenPrice={props.tokenPrice.toString()}
-        />
-        );
-    });
-    console.log(tokenFeedArr);
+    let tokenAddrArr = Array.from(tokenAddr, ([key, val]) => ({key, val}));
+
+    const priceFeed = (addr) => {
+        const provider = new ethers.providers.JsonRpcProvider(MAINNET_API_KEY);
+        const aggregatorV3InterfaceABI = [
+          {
+            inputs: [],
+            name: "decimals",
+            outputs: [{ internalType: "uint8", name: "", type: "uint8" }],
+            stateMutability: "view",
+            type: "function",
+          },
+          {
+            inputs: [],
+            name: "description",
+            outputs: [{ internalType: "string", name: "", type: "string" }],
+            stateMutability: "view",
+            type: "function",
+          },
+          {
+            inputs: [{ internalType: "uint80", name: "_roundId", type: "uint80" }],
+            name: "getRoundData",
+            outputs: [
+              { internalType: "uint80", name: "roundId", type: "uint80" },
+              { internalType: "int256", name: "answer", type: "int256" },
+              { internalType: "uint256", name: "startedAt", type: "uint256" },
+              { internalType: "uint256", name: "updatedAt", type: "uint256" },
+              { internalType: "uint80", name: "answeredInRound", type: "uint80" },
+            ],
+            stateMutability: "view",
+            type: "function",
+          },
+          {
+            inputs: [],
+            name: "latestRoundData",
+            outputs: [
+              { internalType: "uint80", name: "roundId", type: "uint80" },
+              { internalType: "int256", name: "answer", type: "int256" },
+              { internalType: "uint256", name: "startedAt", type: "uint256" },
+              { internalType: "uint256", name: "updatedAt", type: "uint256" },
+              { internalType: "uint80", name: "answeredInRound", type: "uint80" },
+            ],
+            stateMutability: "view",
+            type: "function",
+          },
+          {
+            inputs: [],
+            name: "version",
+            outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+            stateMutability: "view",
+            type: "function",
+          },
+        ];
+        const priceFeed = new ethers.Contract(addr, aggregatorV3InterfaceABI, provider);
+        return priceFeed.latestRoundData();
+      }
 
     return (
         <section className="overlay" id="chainlink-feeds" onBlur={(e) => props.onBlur(e)}>
-            {tokenFeedArr}
+            {tokenFeed}
         </section>
     )
 }
