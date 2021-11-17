@@ -1,9 +1,14 @@
 import React, { useState } from "react";
+import { MessageContext } from "./MessageContext";
+import { ChainlinkFeeds } from "./ChainlinkFeeds";
+import { EmojiMenu } from "./EmojiMenu";
 
 export const SendMessage = ({ sendMessage }) => {
   const [inputValue, setInputValue] = useState("");
-  const { ethers } = require("ethers")
-  const API_KEY = process.env.REACT_APP_KOVAN_API_KEY;
+  const [showContext, setShowContext] = useState();
+  const [showEmojiMenu, setShowEmojiMenu] = useState();
+  const [showChainlinkFeeds, setShowChainlinkFeeds] = useState();
+
 
   const keyHandler = (e) => {
     if (e.key === "Enter" && inputValue.trim() !== "") {
@@ -23,73 +28,52 @@ export const SendMessage = ({ sendMessage }) => {
     }
   };
 
-  const priceFeed = () => {
-    const provider = new ethers.providers.JsonRpcProvider(API_KEY);
-    const aggregatorV3InterfaceABI = [
-      {
-        inputs: [],
-        name: "decimals",
-        outputs: [{ internalType: "uint8", name: "", type: "uint8" }],
-        stateMutability: "view",
-        type: "function",
-      },
-      {
-        inputs: [],
-        name: "description",
-        outputs: [{ internalType: "string", name: "", type: "string" }],
-        stateMutability: "view",
-        type: "function",
-      },
-      {
-        inputs: [{ internalType: "uint80", name: "_roundId", type: "uint80" }],
-        name: "getRoundData",
-        outputs: [
-          { internalType: "uint80", name: "roundId", type: "uint80" },
-          { internalType: "int256", name: "answer", type: "int256" },
-          { internalType: "uint256", name: "startedAt", type: "uint256" },
-          { internalType: "uint256", name: "updatedAt", type: "uint256" },
-          { internalType: "uint80", name: "answeredInRound", type: "uint80" },
-        ],
-        stateMutability: "view",
-        type: "function",
-      },
-      {
-        inputs: [],
-        name: "latestRoundData",
-        outputs: [
-          { internalType: "uint80", name: "roundId", type: "uint80" },
-          { internalType: "int256", name: "answer", type: "int256" },
-          { internalType: "uint256", name: "startedAt", type: "uint256" },
-          { internalType: "uint256", name: "updatedAt", type: "uint256" },
-          { internalType: "uint80", name: "answeredInRound", type: "uint80" },
-        ],
-        stateMutability: "view",
-        type: "function",
-      },
-      {
-        inputs: [],
-        name: "version",
-        outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
-        stateMutability: "view",
-        type: "function",
-      },
-    ];
-    const addr = "0x9326BFA02ADD2366b30bacB125260Af641031331";
-    const priceFeed = new ethers.Contract(addr, aggregatorV3InterfaceABI, provider);
-    priceFeed.latestRoundData()
-        .then((roundData) => {
-            // Do something with roundData
-            console.log(roundData)
-        })
+  function createChainlinkFeeds(e){
+    if(e._reactName === 'onClick' && showChainlinkFeeds === undefined){
+      setShowChainlinkFeeds(
+        <ChainlinkFeeds
+          value={(val) => {
+            setInputValue(inputValue + val);
+            createChainlinkFeeds("");
+            }}
+          onBlur={(e) => createChainlinkFeeds(e)}
+        />
+      )
+    }
+    else{
+      setShowChainlinkFeeds(undefined);
+    }
+  }
 
+  function createEmojiMenu(e){
+    if(e._reactName === 'onClick' && showEmojiMenu === undefined){
+      setShowEmojiMenu(
+        <EmojiMenu
+          value={(val) => {
+            setInputValue(inputValue + val);
+            createEmojiMenu("");
+          }}
+          onBlur={(e) => createEmojiMenu(e)}
+        />
+      )
+    }
+    else{
+      setShowEmojiMenu(undefined);
+    }
   }
 
   function createMessageContext(e){
-    if(e.target.value.length >= 3){
+    if(e.target.value.length >= 3 && (e.target.value[0] === ":" || e.target.value[0] === "/")){
       console.log("Open message context");
+      setShowContext(
+      <MessageContext
+        value={(val) => setInputValue(inputValue + val)}
+        onBlur={(e) => createMessageContext(e)}
+      />
+      );
     }
     else{
-      console.log("Close message context");
+      setShowContext(undefined);
     }
   }
 
@@ -107,8 +91,15 @@ export const SendMessage = ({ sendMessage }) => {
         onInput={(e) => createMessageContext(e)}
         onKeyPress={(e) => keyHandler(e)}
       ></input>
-      <button id="chainlink-feeds" onClick={() => priceFeed()}>&#x2B21;</button>
-      <button id="pick-emoji" onClick={() => console.log("Pick emoji")}>&#x1F60A;</button>
+      {showContext}
+      <button id="chainlink-feed"
+        onClick={(e) => createChainlinkFeeds(e)}
+      >&#x2B21;</button>
+      {showChainlinkFeeds}
+      <button id="pick-emoji"
+        onClick={(e) => createEmojiMenu(e)}
+      >&#x1F60A;</button>
+      {showEmojiMenu}
       <button id="message-submit" onClick={(e) => buttonHandler(e)}>Submit</button>
     </section>
   );
