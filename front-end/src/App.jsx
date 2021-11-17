@@ -20,78 +20,81 @@ const ENTROPY = process.env.REACT_APP_ENTROPY;
 //Database Instance
 let db;
 
+//Components
+let messagesArr = [];
+
 export default function App() {
   const { account, activateBrowserWallet, deactivate } = useEthers();
   const etherBalance = useEtherBalance(account);
 
   const [ownerAddress, setOwnerAddress] = useState("");
 
-  const [messageToCanvas, setMessageToCanvas] = useState([]);
+  const [, setMessageToCanvas] = useState(messagesArr);
   const [friendToCanvas, setFriendToCanvas] = useState([]);
 
   //Initialize IPFS
   useEffect(() => {
+
+    // Set shortened account address
+    setOwnerAddress(shortenIfAddress(account));
+
     // Create a new keypair
     const userKeyPair = new BigchainDB.Ed25519Keypair(
       bip39.mnemonicToSeedSync(ENTROPY).slice(0, 32)
     );
-    console.log('./orbitdb/'+ userKeyPair.publicKey);
 
     async function ipfsInit(){
       try {
-        if(db === undefined){
-          console.log("Starting IPFS...")
-          const ipfs = await IPFS.create({
-            repo: './ipfs',
-            start: true,
-            EXPERIMENTAL: {
-              pubsub: true,
-            },
-          })
-          const orbitdb = await OrbitDB.createInstance(ipfs, {
-            directory: './orbitdb/'+ userKeyPair.publicKey
-          })
-          console.log("IPFS Initialized")
-          db = await orbitdb.feed(userKeyPair.toString(), { overwrite: true })
-        }
+        console.log("Starting IPFS...")
+        const ipfs = await IPFS.create({
+          preload: { enabled: false },
+          repo: './ipfs',
+          start: true,
+          EXPERIMENTAL: {
+            pubsub: true,
+          },
+        })
+        const orbitdb = await OrbitDB.createInstance(ipfs, {
+          directory: './orbitdb/'+ userKeyPair.publicKey
+        })
+        console.log("IPFS Initialized")
+        db = await orbitdb.feed(userKeyPair.toString(), { overwrite: true })
         await db.load()
+
       } catch (e) {
         console.error(e)
       }
     }
 
-    async function loadMessages(){
-      let messagesArr;
-      try{
-        await db.iterator({ limit: -1 }).collect().map((e) => {
-            messagesArr =
-            [
-            messagesArr,
-            <Message
-              key={e.payload.value.date}
-              pData={e.payload.value}
-              ownMessage={false}
-              messageClicked={(msgData) => messageClicked(msgData.pData)}
-            />,
-            ]
-          }
+    async function loadMessages() {
+      try {
+        messagesArr = await db.iterator({ limit: -1 }).collect().map(e => 
+        <Message
+          key={e.payload.value.date}
+          postedData={e.payload.value}
+          userAddress={account}
+          messageClicked={(msg) => messageClicked(msg)}
+          deleteMessage={(msg) => deleteMessage(msg)}
+          openMessageContext={(msg) => openMessageContext(msg)}
+        />,
         );
+        //Add a new message to the app
         setMessageToCanvas(messagesArr);
-      }
-      catch(err){
+
+      } catch (err) {
         console.log(err);
       }
     }
 
     //LOAD MESSAGES
-    ipfsInit().then(() => {
-      loadMessages();
-    });
-  }, [])
-
-  useEffect(() => {
-    setOwnerAddress(shortenIfAddress(account));
-  }, [account]);
+    if(account !== undefined){
+      ipfsInit().then(() => {
+        loadMessages();
+        //Database Location
+        console.log('./orbitdb/'+ userKeyPair.publicKey);
+      });
+    }
+  }, [account])
 
   const formatEthBalance = () => {
     try {
@@ -103,35 +106,56 @@ export default function App() {
 
   const addMessage = async (messageText, messageDate) => {
     try{
-      await db.add({ message: messageText, date: messageDate });
-      const postedData = await db.iterator({ limit: 1 }).collect().map((e) => e.payload.value);
-      const pData = postedData[0];
-      console.log(pData);
+      await db.add({sender: account, message: messageText, date: messageDate }).then(e => {
+        console.log(e);
+      })
+      const postedData = await db.iterator({ limit: 1 }).collect().map((e) => e.payload.value)[0];
+      console.log(postedData);
 
       //Add a new message to the app
-      setMessageToCanvas([
-        messageToCanvas,
-        <Message
-          key={pData.date}
-          pData={pData}
-          ownMessage={false}
-          messageClicked={(msgData) => messageClicked(msgData.pData)}
-        />,
-      ]);
+      messagesArr = [
+      ...messagesArr,
+      <Message
+        key={postedData.date}
+        postedData={postedData}
+        userAddress={account}
+        messageClicked={(msg) => messageClicked(msg)}
+        deleteMessage={(msg) => deleteMessage(msg)}
+        openMessageContext={(msg) => openMessageContext(msg)}
+      />,
+      ];
+      setMessageToCanvas(messagesArr);
+      console.log(messagesArr);
     }
     catch(err){
+      alert("Please connect your wallet before using Chime.");
       console.log(err);
     }
   };
 
-  function messageClicked(pData){
+  function messageClicked(msg){
     try {
-      // const itemsArr = [...db.iterator({ limit: -1} ).collect().map(e => e.payload.value.date)];
-      console.log(pData);
-      // console.log(itemsArr.filter(word => Date.parse(word)));
+      console.log(msg);
     } catch (e) {
       console.error(e)
     }
+  }
+
+  async function deleteMessage(msg){
+    const dbEntry = db.iterator({ limit: -1 }).collect().filter(e => e.payload.value === msg)[0];
+    db.remove(dbEntry.hash).then(hash => {
+      //Remove targeted message from database
+      db.remove(hash);
+      //Filter the remaining messages (except target) and set that to be the new array
+      messagesArr = messagesArr.filter(message => message.props.postedData !== msg);
+      //Update application render
+      setMessageToCanvas(messagesArr);
+      console.log("Deleted: " + dbEntry.hash)
+    });
+  }
+
+  function openMessageContext(){
+    console.log("Open Message Context");
   }
 
   const connect = () => {
@@ -233,7 +257,7 @@ export default function App() {
 
         <section id="messages-container">
           <div>
-            <div>{messageToCanvas}</div>
+            <div>{messagesArr}</div>
           </div>
           <SendMessage sendMessage={(messageText, messageDate) => addMessage(messageText, messageDate)} />
         </section>

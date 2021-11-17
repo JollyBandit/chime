@@ -1,9 +1,17 @@
 import React, { useState } from "react";
+import { MessageContext } from "./MessageContext";
+import { ChainlinkFeeds } from "./ChainlinkFeeds";
+import { EmojiMenu } from "./EmojiMenu";
+const { ethers } = require("ethers")
 
 export const SendMessage = ({ sendMessage }) => {
   const [inputValue, setInputValue] = useState("");
-  const { ethers } = require("ethers")
-  const API_KEY = process.env.REACT_APP_KOVAN_API_KEY;
+  const [showContext, setShowContext] = useState();
+  const [showEmojiMenu, setShowEmojiMenu] = useState();
+  const [showChainlinkFeeds, setShowChainlinkFeeds] = useState();
+  
+  // const KOVAN_API_KEY = process.env.REACT_APP_KOVAN_API_KEY;
+  const MAINNET_API_KEY = process.env.REACT_APP_MAINNET_API_KEY
 
   const keyHandler = (e) => {
     if (e.key === "Enter" && inputValue.trim() !== "") {
@@ -23,8 +31,8 @@ export const SendMessage = ({ sendMessage }) => {
     }
   };
 
-  const priceFeed = () => {
-    const provider = new ethers.providers.JsonRpcProvider(API_KEY);
+  const priceFeed = (addr) => {
+    const provider = new ethers.providers.JsonRpcProvider(MAINNET_API_KEY);
     const aggregatorV3InterfaceABI = [
       {
         inputs: [],
@@ -74,22 +82,59 @@ export const SendMessage = ({ sendMessage }) => {
         type: "function",
       },
     ];
-    const addr = "0x9326BFA02ADD2366b30bacB125260Af641031331";
     const priceFeed = new ethers.Contract(addr, aggregatorV3InterfaceABI, provider);
-    priceFeed.latestRoundData()
-        .then((roundData) => {
-            // Do something with roundData
-            console.log(roundData)
-        })
+    return priceFeed.latestRoundData();
+  }
 
+  function createChainlinkFeeds(e){
+    if(e._reactName === 'onClick' && showChainlinkFeeds === undefined){
+      setShowChainlinkFeeds(
+        <ChainlinkFeeds
+          tokenAddress={(e) => {
+            priceFeed(e).then(roundData => {
+              setInputValue(inputValue + ethers.BigNumber.from(roundData.answer._hex).toBigInt());
+              createChainlinkFeeds(e);
+            });
+          }}
+          onBlur={(e) => createChainlinkFeeds(e)}
+          tokenPrice={priceFeed("0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c")}
+        />
+      );
+    }
+    else{
+      setShowChainlinkFeeds(undefined);
+    }
+  }
+
+  function createEmojiMenu(e){
+    if(e._reactName === 'onClick' && showEmojiMenu === undefined){
+      setShowEmojiMenu(
+        <EmojiMenu
+          value={(e) => {
+            setInputValue(inputValue + e);
+            createEmojiMenu(e);
+          }}
+          onBlur={(e) => createEmojiMenu(e)}
+        />
+      )
+    }
+    else{
+      setShowEmojiMenu(undefined);
+    }
   }
 
   function createMessageContext(e){
-    if(e.target.value.length >= 3){
+    if(e.target.value.length >= 3 && (e.target.value[0] === ":" || e.target.value[0] === "/")){
       console.log("Open message context");
+      setShowContext(
+      <MessageContext
+        value={(e) => setInputValue(inputValue + e)}
+        onBlur={(e) => createMessageContext(e)}
+      />
+      );
     }
     else{
-      console.log("Close message context");
+      setShowContext(undefined);
     }
   }
 
@@ -107,8 +152,15 @@ export const SendMessage = ({ sendMessage }) => {
         onInput={(e) => createMessageContext(e)}
         onKeyPress={(e) => keyHandler(e)}
       ></input>
-      <button id="chainlink-feeds" onClick={() => priceFeed()}>&#x2B21;</button>
-      <button id="pick-emoji" onClick={() => console.log("Pick emoji")}>&#x1F60A;</button>
+      {showContext}
+      <button id="chainlink-feed"
+        onClick={(e) => createChainlinkFeeds(e)}
+      >&#x2B21;</button>
+      {showChainlinkFeeds}
+      <button id="pick-emoji"
+        onClick={(e) => createEmojiMenu(e)}
+      >&#x1F60A;</button>
+      {showEmojiMenu}
       <button id="message-submit" onClick={(e) => buttonHandler(e)}>Submit</button>
     </section>
   );
