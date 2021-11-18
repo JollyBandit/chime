@@ -18,13 +18,15 @@ export const ChainlinkFeeds = (props) => {
                 let i = 0;
                 let tokenFeedArr = [];
                 roundDataArr.forEach(roundData => {
+                    const name = tokenAddrArr[i].key;
                     tokenFeedArr.push(
                         <TokenFeed
-                        key={tokenAddrArr[i].key}
-                        onClick={() => props.value(ethers.BigNumber.from(roundData.answer._hex).toBigInt().toString())}
-                        tokenName={tokenAddrArr[i].key}
-                        tokenPrice={ethers.BigNumber.from(roundData.answer._hex).toBigInt().toString()}
-                    />
+                        key={roundData}
+                        onClick={() => props.value("[" + name + "," + (ethers.BigNumber.from(roundData.answer._hex).toNumber() / 100000000).toFixed(2).toString() + "]")}
+                        tokenName={name}
+                        tokenPrice={(ethers.BigNumber.from(roundData.answer._hex).toNumber() / 100000000).toFixed(2).toString()}
+                        hideLiveFeedCheckbox={true}
+                        />
                     );
                     i++;
                 });
@@ -35,6 +37,7 @@ export const ChainlinkFeeds = (props) => {
 
     const MAINNET_API_KEY = process.env.REACT_APP_MAINNET_API_KEY
 
+    //Non-ETH Pairs - 8 Decimals
     const tokenAddr = new Map();
     tokenAddr.set("BTC", "0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c")
     tokenAddr.set("ETH", "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419")
@@ -52,6 +55,7 @@ export const ChainlinkFeeds = (props) => {
     tokenAddr.set("MKR", "0xec1D1B3b0443256cc3860e24a46F108e699484Aa")
     tokenAddr.set("SUSHI", "0xCc70F09A6CC17553b2E31954cD36E4A2d89501f7")
     tokenAddr.set("XRP", "0xCed2660c6Dd1Ffd856A5A82C67f3482d88C50b12")
+    // tokenAddr.set("FIL", "0x1A31D42149e82Eb99777f903C08A2E41A00085d3")
 
     let tokenAddrArr = Array.from(tokenAddr, ([key, val]) => ({key, val}));
 
