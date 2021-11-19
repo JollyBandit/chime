@@ -24,7 +24,6 @@ export function Message(props) {
     );
   }
   else if(message.startsWith("[") && message.endsWith("]")){
-    console.log("Place Token Feed Here");
     tokenFeedArr.push(
       <TokenFeed
         key={1}

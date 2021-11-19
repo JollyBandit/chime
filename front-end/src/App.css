@@ -414,12 +414,24 @@ html{
   display: grid;
   grid-template-columns: auto auto auto auto;
   right: 10%;
-  min-width: 60%;
-  background-image: './logo.svg';
   min-height: 100px;
   min-width: 100px;
   border-radius: 50px;
   z-index: 2;
+}
+
+#chainlink-feeds.loadingCLFeeds{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 6px dotted rgba(179,225,238,1);
+  border-radius: 314px;
+  animation: spin 3s linear infinite;
+}
+
+#chainlink-feeds.loadingCLFeeds p{
+  animation: spin 3s linear reverse infinite, blink 5s linear infinite;
+  font-size: 1em;
 }
 
 /*TOKEN FEED*/
@@ -451,20 +463,6 @@ html{
   background-size: 1000px 100px;
   margin: 0;
   transform: translateY(35px);
-}
-
-@keyframes gradient-bg
-{
-    0%{
-        background-position: 0% 50%;
-    }
-    50%{
-        background-position: 100% 50%;
-    }
-    100%{
-        background-position: 0% 50%;
-    }
-
 }
 
 #token-feed .wave.water
