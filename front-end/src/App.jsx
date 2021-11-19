@@ -73,7 +73,7 @@ export default function App() {
           key={e.payload.value.date}
           postedData={e.payload.value}
           userAddress={account}
-          messageClicked={(msg) => messageClicked(msg)}
+          clickMessage={(msg) => clickMessage(msg)}
           deleteMessage={(msg) => deleteMessage(msg)}
           openMessageContext={(msg) => openMessageContext(msg)}
         />,
@@ -119,13 +119,12 @@ export default function App() {
         key={postedData.date}
         postedData={postedData}
         userAddress={account}
-        messageClicked={(msg) => messageClicked(msg)}
+        clickMessage={(msg) => clickMessage(msg)}
         deleteMessage={(msg) => deleteMessage(msg)}
         openMessageContext={(msg) => openMessageContext(msg)}
       />,
       ];
       setMessageToCanvas(messagesArr);
-      console.log(messagesArr);
     }
     catch(err){
       alert("Please connect your wallet before using Chime.");
@@ -133,7 +132,7 @@ export default function App() {
     }
   };
 
-  function messageClicked(msg){
+  function clickMessage(msg){
     try {
       console.log(msg);
     } catch (e) {
