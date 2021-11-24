@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
 
-import { shortenIfAddress, useEtherBalance, useEthers } from "@usedapp/core";
+import { useEtherBalance, useEthers } from "@usedapp/core";
 import { formatEther } from "@ethersproject/units";
 
 import { ConnectButton } from "./components/ConnectButton";
@@ -9,7 +9,6 @@ import { Button } from "@mui/material";
 import { Message } from "./components/Message";
 import { Friend } from "./components/Friend";
 import { SendMessage } from "./components/SendMessage";
-import * as BigchainDB from "bigchaindb-driver";
 import * as bip39 from "bip39";
 
 const IPFS = require('ipfs');
@@ -27,39 +26,86 @@ export default function App() {
   const { account, activateBrowserWallet, deactivate } = useEthers();
   const etherBalance = useEtherBalance(account);
 
-  const [ownerAddress, setOwnerAddress] = useState("");
-
   const [, setMessageToCanvas] = useState(messagesArr);
   const [friendToCanvas, setFriendToCanvas] = useState([]);
 
   //Initialize IPFS
   useEffect(() => {
 
-    // Set shortened account address
-    setOwnerAddress(shortenIfAddress(account));
+    // Create a new seed
+    const userKeyPair = bip39.mnemonicToSeedSync(ENTROPY).slice(0, 32);
+    console.log(userKeyPair);
 
-    // Create a new keypair
-    const userKeyPair = new BigchainDB.Ed25519Keypair(
-      bip39.mnemonicToSeedSync(ENTROPY).slice(0, 32)
-    );
 
     async function ipfsInit(){
       try {
         console.log("Starting IPFS...")
         const ipfs = await IPFS.create({
-          preload: { enabled: false },
           repo: './ipfs',
           start: true,
+          preload: {
+            enabled: false
+          },
           EXPERIMENTAL: {
             pubsub: true,
           },
+          config: {
+            Addresses: {
+              Swarm: [
+                // Use IPFS dev signal server
+                // '/dns4/star-signal.cloud.ipfs.team/wss/p2p-webrtc-star',
+                // '/dns4/ws-star.discovery.libp2p.io/tcp/443/wss/p2p-websocket-star',
+                // Use IPFS dev webrtc signal server
+                '/dns4/wrtc-star1.par.dwebops.pub/tcp/443/wss/p2p-webrtc-star/',
+                '/dns4/wrtc-star2.sjc.dwebops.pub/tcp/443/wss/p2p-webrtc-star/',
+                '/dns4/webrtc-star.discovery.libp2p.io/tcp/443/wss/p2p-webrtc-star/',
+                // Use local signal server
+                // '/ip4/0.0.0.0/tcp/9090/wss/p2p-webrtc-star',
+              ]
+            },
+          }
         })
+        
         const orbitdb = await OrbitDB.createInstance(ipfs, {
-          directory: './orbitdb/'+ userKeyPair.publicKey
+          directory: './orbitdb',
+          accessController: {
+            write: ['*'],
+          }
         })
-        console.log("IPFS Initialized")
-        db = await orbitdb.feed(userKeyPair.toString(), { overwrite: true })
+        
+        if(account === "0x98b01D04ab7B40Ffe856Be164f476a45Bf8E5B37"){
+          console.log("DB1")
+          db = await orbitdb.feed("testing123", { overwrite: true })
+
+          db.events.on('ready', () => console.log("Ready"));
+          db.events.on('write', (dbname, heads) => console.log("Wrote to DB!"));
+          db.events.on('replicated', (address) => console.log("Replicated with " + address));
+          db.events.on('replicate.progress', (address, hash, entry, progress, have) => console.log("replicating " + address));
+          db.events.on('load', (address) => console.log("Loading db"));
+          db.events.on('load.progress', (address) => console.log("Loading db progress"));
+
+          await db.load()
+        }
+        else{
+          // Test Replication
+          const replicatedAddress = '/orbitdb/zdpuB3XDmUaeYXkzGRVVV1TmTPWNg4u742zdcucnBfziXkNJ3/msgTesting2';
+          console.log("DB2")
+          console.log(OrbitDB.isValidAddress(replicatedAddress));
+          db = await orbitdb.feed(replicatedAddress);
+
+          db.events.on('ready', () => console.log("Ready"));
+          db.events.on('write', (dbname, heads) => console.log("Wrote to DB!"));
+          db.events.on('replicated', (address) => console.log("Replicated with " + address));
+          db.events.on('replicate.progress', (address, hash, entry, progress, have) => console.log("replicating " + address));
+          db.events.on('load', (address) => console.log("Loading db"));
+          db.events.on('load.progress', (address) => console.log("Loading db progress"));
+
+          await db.load()
+        }
+
+        console.log("DB is " + db.address);
         await db.load()
+        await db.iterator({ limit: -1 }).collect().map(e => console.log(e.payload.value))
 
       } catch (e) {
         console.error(e)
@@ -90,8 +136,6 @@ export default function App() {
     if(account !== undefined){
       ipfsInit().then(() => {
         loadMessages();
-        //Database Location
-        console.log('./orbitdb/'+ userKeyPair.publicKey);
       });
     }
   }, [account])
@@ -107,10 +151,9 @@ export default function App() {
   const addMessage = async (messageText, messageDate) => {
     try{
       await db.add({sender: account, message: messageText, date: messageDate }).then(e => {
-        console.log(e);
+        console.log("This message's hash is: " + e);
       })
       const postedData = await db.iterator({ limit: 1 }).collect().map((e) => e.payload.value)[0];
-      console.log(postedData);
 
       //Add a new message to the app
       messagesArr = [
@@ -160,15 +203,20 @@ export default function App() {
   const connect = () => {
     activateBrowserWallet();
     console.log(
-      "The client has been connected, here is their address: " + ownerAddress
+      "The client attempted to connect"
     );
   };
 
   const disconnect = () => {
     deactivate();
     console.log(
-      "The client has been disconnected, here is their address: " + ownerAddress
+      "The client has been disconnected"
     );
+    messagesArr = [];
+    if(db){
+      db.close().then(() => console.log("DB closed."));
+    }
+    connect();
     // if(disableMessageSharing){
     //   console.log("Encrypting messages to owner's address");
     // }
@@ -229,6 +277,7 @@ export default function App() {
             <div>
               <p>Friends List</p>
               {friendToCanvas}
+              <Friend/>
             </div>
           </section>
 
@@ -244,7 +293,7 @@ export default function App() {
               <ConnectButton
                 connect={connect}
                 disconnect={disconnect}
-                ownerAddress={ownerAddress}
+                account={account}
               />
               <p>
                 {formatEthBalance().substr(0, 6) +

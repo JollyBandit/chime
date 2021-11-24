@@ -47,10 +47,10 @@ export function Message(props) {
       className={props.ownMessage ? "message own" : "message"}
       onClick={() => props.clickMessage(props.postedData)}
     >
-      <img src="https://placedog.net/200/200" alt="User"></img>
+      <img src={"https://robohash.org/" + props.postedData.sender + ".png?set=set5"} alt="User"></img>
       <div>
         <div>
-          <p id="messageID">User ID</p>
+          <p id="messageID">{props.postedData.sender}</p>
           <p id="messageDate">{props.postedData.date}</p>
         </div>
         {/* Message Content */}
