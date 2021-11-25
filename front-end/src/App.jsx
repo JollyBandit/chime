@@ -9,59 +9,22 @@ import { Button } from "@mui/material";
 import { Message } from "./components/Message";
 import { Friend } from "./components/Friend";
 import { SendMessage } from "./components/SendMessage";
-import StreamrClient from "streamr-client";
-
-const axios = require('axios').default;
-
-const StreamID = '0x98b01d04ab7b40ffe856be164f476a45bf8e5b37/chimetest2'
+import getMessageStream, {getStreamCreation, getStreamData} from "./services/Streamr_API"
 
 //Components
 let messagesArr = [];
 
 export default function App() {
-  const { account, activateBrowserWallet, deactivate, library } = useEthers();
+  const { account, activateBrowserWallet, deactivate} = useEthers();
   const etherBalance = useEtherBalance(account);
 
   const [, setMessageToCanvas] = useState(messagesArr);
   const [friendToCanvas, setFriendToCanvas] = useState([]);
 
-  const { ethereum } = window;
-
-  const streamr = new StreamrClient({
-    auth: {ethereum},
-    publishWithSignature: "never",
-  })
-
-  const getStreamCreation = async (_stream) => {
-    const stream = await streamr.getStream(_stream);
-    //Return time since epoch (milliseconds)
-    return new Date(stream.dateCreated).getTime()
-  }
-
-  const getStreamLast = async (_stream) => {
-    const stream = await streamr.getStreamLast(_stream);
-    return stream[0].content;
-  }
-
-  async function getStreamData(_stream){
-    const result = await axios.request({
-      "method": "get",
-      "url": "https://streamr.network/api/v1/streams/" + encodeURIComponent(_stream) + "/data/partitions/0/from",
-      "headers": {
-        "Content-Type": "application/json",
-        "authorization": "Bearer ZbZI0GhKxE7Z3U1lZ5a6YhoI2MKb23SHBm35n4T7eyI5qs1BfX6Oe7YU07lSyGNr"
-      },
-      "params": {
-        "fromTimestamp": await getStreamCreation(_stream)
-      }
-    })
-    return result.data;
-  }
-
   useEffect(() => {
     async function loadMessages() {
-      const streamDataArr = await getStreamData(StreamID);
       try {
+        const streamDataArr = await getStreamData();
         messagesArr = streamDataArr.map(e =>
         <Message
           key={e.timestamp}
@@ -79,7 +42,10 @@ export default function App() {
         console.log(err);
       }
     }
-    loadMessages();
+    //Load if the user wallet is connected
+    if(account){
+      loadMessages();
+    }
   }, [account])
 
   const formatEthBalance = () => {
@@ -92,7 +58,8 @@ export default function App() {
 
   const addMessage = async (messageText, messageDate) => {
     try{
-      streamr.publish(StreamID, {
+      const stream = await getMessageStream();
+      await stream.publish({
         sender: account,
         message: messageText,
         date: messageDate
@@ -202,7 +169,7 @@ export default function App() {
         <section id="sidebar-container">
           <section id="browser-servers">
             <Button onClick={() => addToFriends()}>Friends</Button>
-            <Button onClick={async () => console.log(await getStreamCreation(StreamID))}>Servers</Button>
+            <Button onClick={async () => console.log(await getStreamCreation())}>Servers</Button>
           </section>
 
           <section id="friends-list">
