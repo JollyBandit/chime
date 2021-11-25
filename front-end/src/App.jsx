@@ -9,135 +9,77 @@ import { Button } from "@mui/material";
 import { Message } from "./components/Message";
 import { Friend } from "./components/Friend";
 import { SendMessage } from "./components/SendMessage";
-import * as bip39 from "bip39";
+import StreamrClient from "streamr-client";
 
-const IPFS = require('ipfs');
-const OrbitDB = require('orbit-db');
+const axios = require('axios').default;
 
-const ENTROPY = process.env.REACT_APP_ENTROPY;
-
-//Database Instance
-let db;
+const StreamID = '0x98b01d04ab7b40ffe856be164f476a45bf8e5b37/chimetest2'
 
 //Components
 let messagesArr = [];
 
 export default function App() {
-  const { account, activateBrowserWallet, deactivate } = useEthers();
+  const { account, activateBrowserWallet, deactivate, library } = useEthers();
   const etherBalance = useEtherBalance(account);
 
   const [, setMessageToCanvas] = useState(messagesArr);
   const [friendToCanvas, setFriendToCanvas] = useState([]);
 
-  //Initialize IPFS
-  useEffect(() => {
+  const { ethereum } = window;
 
-    // Create a new seed
-    const userKeyPair = bip39.mnemonicToSeedSync(ENTROPY).slice(0, 32);
-    console.log(userKeyPair);
+  const streamr = new StreamrClient({
+    auth: {ethereum},
+    publishWithSignature: "never",
+  })
 
+  const getStreamCreation = async (_stream) => {
+    const stream = await streamr.getStream(_stream);
+    //Return time since epoch (milliseconds)
+    return new Date(stream.dateCreated).getTime()
+  }
 
-    async function ipfsInit(){
-      try {
-        console.log("Starting IPFS...")
-        const ipfs = await IPFS.create({
-          repo: './ipfs',
-          start: true,
-          preload: {
-            enabled: false
-          },
-          EXPERIMENTAL: {
-            pubsub: true,
-          },
-          config: {
-            Addresses: {
-              Swarm: [
-                // Use IPFS dev signal server
-                // '/dns4/star-signal.cloud.ipfs.team/wss/p2p-webrtc-star',
-                // '/dns4/ws-star.discovery.libp2p.io/tcp/443/wss/p2p-websocket-star',
-                // Use IPFS dev webrtc signal server
-                '/dns4/wrtc-star1.par.dwebops.pub/tcp/443/wss/p2p-webrtc-star/',
-                '/dns4/wrtc-star2.sjc.dwebops.pub/tcp/443/wss/p2p-webrtc-star/',
-                '/dns4/webrtc-star.discovery.libp2p.io/tcp/443/wss/p2p-webrtc-star/',
-                // Use local signal server
-                // '/ip4/0.0.0.0/tcp/9090/wss/p2p-webrtc-star',
-              ]
-            },
-          }
-        })
-        
-        const orbitdb = await OrbitDB.createInstance(ipfs, {
-          directory: './orbitdb',
-          accessController: {
-            write: ['*'],
-          }
-        })
-        
-        if(account === "0x98b01D04ab7B40Ffe856Be164f476a45Bf8E5B37"){
-          console.log("DB1")
-          db = await orbitdb.feed("testing123", { overwrite: true })
+  const getStreamLast = async (_stream) => {
+    const stream = await streamr.getStreamLast(_stream);
+    return stream[0].content;
+  }
 
-          db.events.on('ready', () => console.log("Ready"));
-          db.events.on('write', (dbname, heads) => console.log("Wrote to DB!"));
-          db.events.on('replicated', (address) => console.log("Replicated with " + address));
-          db.events.on('replicate.progress', (address, hash, entry, progress, have) => console.log("replicating " + address));
-          db.events.on('load', (address) => console.log("Loading db"));
-          db.events.on('load.progress', (address) => console.log("Loading db progress"));
-
-          await db.load()
-        }
-        else{
-          // Test Replication
-          const replicatedAddress = '/orbitdb/zdpuB3XDmUaeYXkzGRVVV1TmTPWNg4u742zdcucnBfziXkNJ3/msgTesting2';
-          console.log("DB2")
-          console.log(OrbitDB.isValidAddress(replicatedAddress));
-          db = await orbitdb.feed(replicatedAddress);
-
-          db.events.on('ready', () => console.log("Ready"));
-          db.events.on('write', (dbname, heads) => console.log("Wrote to DB!"));
-          db.events.on('replicated', (address) => console.log("Replicated with " + address));
-          db.events.on('replicate.progress', (address, hash, entry, progress, have) => console.log("replicating " + address));
-          db.events.on('load', (address) => console.log("Loading db"));
-          db.events.on('load.progress', (address) => console.log("Loading db progress"));
-
-          await db.load()
-        }
-
-        console.log("DB is " + db.address);
-        await db.load()
-        await db.iterator({ limit: -1 }).collect().map(e => console.log(e.payload.value))
-
-      } catch (e) {
-        console.error(e)
+  async function getStreamData(_stream){
+    const result = await axios.request({
+      "method": "get",
+      "url": "https://streamr.network/api/v1/streams/" + encodeURIComponent(_stream) + "/data/partitions/0/from",
+      "headers": {
+        "Content-Type": "application/json",
+        "authorization": "Bearer ZbZI0GhKxE7Z3U1lZ5a6YhoI2MKb23SHBm35n4T7eyI5qs1BfX6Oe7YU07lSyGNr"
+      },
+      "params": {
+        "fromTimestamp": await getStreamCreation(_stream)
       }
-    }
+    })
+    return result.data;
+  }
 
+  useEffect(() => {
     async function loadMessages() {
+      const streamDataArr = await getStreamData(StreamID);
       try {
-        messagesArr = await db.iterator({ limit: -1 }).collect().map(e => 
+        messagesArr = streamDataArr.map(e =>
         <Message
-          key={e.payload.value.date}
-          postedData={e.payload.value}
+          key={e.timestamp}
+          postedData={e.content}
           userAddress={account}
           clickMessage={(msg) => clickMessage(msg)}
           deleteMessage={(msg) => deleteMessage(msg)}
           openMessageContext={(msg) => openMessageContext(msg)}
         />,
         );
-        //Add a new message to the app
+        // Add a new message to the app
         setMessageToCanvas(messagesArr);
-
+  
       } catch (err) {
         console.log(err);
       }
     }
-
-    //LOAD MESSAGES
-    if(account !== undefined){
-      ipfsInit().then(() => {
-        loadMessages();
-      });
-    }
+    loadMessages();
   }, [account])
 
   const formatEthBalance = () => {
@@ -150,24 +92,26 @@ export default function App() {
 
   const addMessage = async (messageText, messageDate) => {
     try{
-      await db.add({sender: account, message: messageText, date: messageDate }).then(e => {
-        console.log("This message's hash is: " + e);
+      streamr.publish(StreamID, {
+        sender: account,
+        message: messageText,
+        date: messageDate
       })
-      const postedData = await db.iterator({ limit: 1 }).collect().map((e) => e.payload.value)[0];
-
-      //Add a new message to the app
-      messagesArr = [
-      ...messagesArr,
-      <Message
-        key={postedData.date}
-        postedData={postedData}
-        userAddress={account}
-        clickMessage={(msg) => clickMessage(msg)}
-        deleteMessage={(msg) => deleteMessage(msg)}
-        openMessageContext={(msg) => openMessageContext(msg)}
-      />,
-      ];
-      setMessageToCanvas(messagesArr);
+      .then((e) => {
+        //Add a new message to the app
+        messagesArr = [
+        ...messagesArr,
+        <Message
+          key={e.streamMessage.messageId.timestamp}
+          postedData={e.streamMessage.parsedContent}
+          userAddress={account}
+          clickMessage={(msg) => clickMessage(msg)}
+          deleteMessage={(msg) => deleteMessage(msg)}
+          openMessageContext={(msg) => openMessageContext(msg)}
+        />,
+        ];
+        setMessageToCanvas(messagesArr);
+      })
     }
     catch(err){
       alert("Please connect your wallet before using Chime.");
@@ -184,16 +128,7 @@ export default function App() {
   }
 
   async function deleteMessage(msg){
-    const dbEntry = db.iterator({ limit: -1 }).collect().filter(e => e.payload.value === msg)[0];
-    db.remove(dbEntry.hash).then(hash => {
-      //Remove targeted message from database
-      db.remove(hash);
-      //Filter the remaining messages (except target) and set that to be the new array
-      messagesArr = messagesArr.filter(message => message.props.postedData !== msg);
-      //Update application render
-      setMessageToCanvas(messagesArr);
-      console.log("Deleted: " + dbEntry.hash)
-    });
+    console.log("Delete: " + msg)
   }
 
   function openMessageContext(){
@@ -213,9 +148,6 @@ export default function App() {
       "The client has been disconnected"
     );
     messagesArr = [];
-    if(db){
-      db.close().then(() => console.log("DB closed."));
-    }
     connect();
     // if(disableMessageSharing){
     //   console.log("Encrypting messages to owner's address");
@@ -270,7 +202,7 @@ export default function App() {
         <section id="sidebar-container">
           <section id="browser-servers">
             <Button onClick={() => addToFriends()}>Friends</Button>
-            <Button onClick={() => console.log(db.address.root)}>Servers</Button>
+            <Button onClick={async () => console.log(await getStreamCreation(StreamID))}>Servers</Button>
           </section>
 
           <section id="friends-list">
