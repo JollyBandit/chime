@@ -1,52 +1,146 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import "./App.css";
 
 import { useEtherBalance, useEthers } from "@usedapp/core";
 import { formatEther } from "@ethersproject/units";
+import { ethers } from "ethers";
 
 import { ConnectButton } from "./components/ConnectButton";
 import { Button } from "@mui/material";
 import { Message } from "./components/Message";
 import { Friend } from "./components/Friend";
 import { SendMessage } from "./components/SendMessage";
-import getMessageStream, {getStreamCreation, getStreamData} from "./services/Streamr_API"
-
-//Components
-let messagesArr = [];
+import getOrCreateMessageStream, {streamr, getStreamCreation} from "./services/Streamr_API"
+import { FriendModal } from "./components/FriendModal";
+import { StorageNode } from "streamr-client";
 
 export default function App() {
-  const { account, activateBrowserWallet, deactivate} = useEthers();
+  const { account, activateBrowserWallet, deactivate } = useEthers();
   const etherBalance = useEtherBalance(account);
 
-  const [, setMessageToCanvas] = useState(messagesArr);
-  const [friendToCanvas, setFriendToCanvas] = useState([]);
+  //Component Constructors
+  const [messages, setMessages] = useState([]);
+  const [friends, setFriends] = useState([])
+  const [friendModal, setFriendModal] = useState(false);
+
+  const [selectedFriend, setSelectedFriend] = useState({address: "Select A Friend", streamID: ""});
+  const [selectedStream, setSelectedStream] = useState("");
+
+  function addFriends(address) {
+    const storageKey = "chime-friends-" + address;
+    const friend = {
+      address: address,
+      streamID: "",
+    }
+    if(window.localStorage.getItem(storageKey) === null && ethers.utils.isAddress(address)){
+      window.localStorage.setItem(storageKey, JSON.stringify(friend));
+      setFriends((oldArr) => [...oldArr, friend]);
+      console.log("Added " + window.localStorage.getItem(storageKey))
+    }
+  }
+
+  async function clickFriend(address){
+    //Clear Messages
+    setMessages([])
+    const storageKey = "chime-friends-" + address;
+    setSelectedFriend(JSON.parse(window.localStorage.getItem(storageKey)));
+    await streamr.getStream(account.toLowerCase() + "/chime-messages/" + address)
+    //Owner stream exists
+    .then(async (stream) => {
+      console.log("Owner stream exists " + stream);
+      setSelectedStream(stream.id);
+    })
+    //Owner stream does not exist
+    .catch(async () => {
+      await streamr.getStream(address.toLowerCase() + "/chime-messages/" + account)
+      //Friend stream exists
+      .then(async (stream) => {
+        console.log("Friend stream exists " + stream);
+        setSelectedStream(stream.id);
+      })
+      //Friend stream doesn't exist
+      .catch(async () => {
+        console.log("Neither Stream Exists")
+        //Create a message stream
+        const stream = await getOrCreateMessageStream(address);
+        grantPermissions(stream, address)
+        // await stream.addToStorageNode(StorageNode.STREAMR_GERMANY);
+        setSelectedStream(stream.id);
+      })
+    })
+  }
+
+  const grantPermissions = async (_stream, _address) => {
+    await _stream.grantPermission("stream_get", _address);
+    await _stream.grantPermission("stream_publish", _address);
+    await _stream.grantPermission("stream_subscribe", _address);
+    await _stream.grantPermission("stream_delete", _address);
+  }
+
+  function deleteFriend(address){
+      const storageKey = "chime-friends-" + address;
+      window.localStorage.removeItem(storageKey);
+      const friendArr = [];
+      for(const key in window.localStorage){
+        if(key.includes("chime-friends")){
+          friendArr.push(window.localStorage.getItem(key))
+        }
+      }
+      setFriends(friendArr);
+  }
 
   useEffect(() => {
-    async function loadMessages() {
+    function loadFriends() {
       try {
-        const streamDataArr = await getStreamData();
-        messagesArr = streamDataArr.map(e =>
-        <Message
-          key={e.timestamp}
-          postedData={e.content}
-          userAddress={account}
-          clickMessage={(msg) => clickMessage(msg)}
-          deleteMessage={(msg) => deleteMessage(msg)}
-          openMessageContext={(msg) => openMessageContext(msg)}
-        />,
-        );
-        // Add a new message to the app
-        setMessageToCanvas(messagesArr);
-  
+        const friendArr = [];
+        //Load friends from local storage
+        for(const key in window.localStorage){
+          if(key.includes("chime-friends")){
+            friendArr.push(JSON.parse(window.localStorage.getItem(key)));
+            console.log(friendArr);
+          }
+        }
+        if(friendArr.length > 0)
+        setFriends([...friendArr]);
+
       } catch (err) {
         console.log(err);
       }
     }
     //Load if the user wallet is connected
     if(account){
-      loadMessages();
+      loadFriends();
     }
   }, [account])
+
+  useEffect(() => {
+    async function loadMessages() {
+      try {
+        console.log(selectedStream);
+        //Load the last 50 messages from previous session
+        streamr.subscribe(
+          {
+            stream: selectedStream,
+            resend: {
+              last: 50,
+            },
+          },
+          handleMessages
+        )
+      } catch (err) {
+        console.log(err);
+      }
+    }
+    //Load if the user wallet is connected
+    console.log(selectedFriend)
+    if(account && messages.length === 0  && selectedStream !== ""){
+      loadMessages();
+    }
+  }, [account, selectedFriend, selectedStream])
+
+  const handleMessages = useCallback((message) => {
+    setMessages((oldArr) => [...oldArr, {...message}]);
+  }, [])
 
   const formatEthBalance = () => {
     try {
@@ -58,26 +152,11 @@ export default function App() {
 
   const addMessage = async (messageText, messageDate) => {
     try{
-      const stream = await getMessageStream();
+      const stream = await streamr.getStream(selectedStream);
       await stream.publish({
         sender: account,
         message: messageText,
         date: messageDate
-      })
-      .then((e) => {
-        //Add a new message to the app
-        messagesArr = [
-        ...messagesArr,
-        <Message
-          key={e.streamMessage.messageId.timestamp}
-          postedData={e.streamMessage.parsedContent}
-          userAddress={account}
-          clickMessage={(msg) => clickMessage(msg)}
-          deleteMessage={(msg) => deleteMessage(msg)}
-          openMessageContext={(msg) => openMessageContext(msg)}
-        />,
-        ];
-        setMessageToCanvas(messagesArr);
       })
     }
     catch(err){
@@ -95,7 +174,7 @@ export default function App() {
   }
 
   async function deleteMessage(msg){
-    console.log("Delete: " + msg)
+    console.log("Delete: " + msg.message)
   }
 
   function openMessageContext(){
@@ -107,6 +186,7 @@ export default function App() {
     console.log(
       "The client attempted to connect"
     );
+    streamr.connect()
   };
 
   const disconnect = () => {
@@ -114,8 +194,11 @@ export default function App() {
     console.log(
       "The client has been disconnected"
     );
-    messagesArr = [];
-    connect();
+    setMessages([]);
+    if(streamr){
+      streamr.getSubscriptions()[0].unsubscribe()
+      streamr.disconnect()
+    }
     // if(disableMessageSharing){
     //   console.log("Encrypting messages to owner's address");
     // }
@@ -129,11 +212,6 @@ export default function App() {
     // console.log("Delete local data");
     // console.log("Stop Chime");
   };
-
-  function addToFriends() {
-    let count = 0;
-    setFriendToCanvas([friendToCanvas, <Friend key={count++} />]);
-  }
 
   /*Settings Vars*/
   // const disableMessageSharing = true;
@@ -153,7 +231,7 @@ export default function App() {
           <input type="text" placeholder="Search..."></input>
         </div>
         <div id="contact">
-          <p>Name</p>
+          <p>{selectedFriend.streamID}</p>
         </div>
         <div>
           <input type="text" placeholder="Search..."></input>
@@ -168,15 +246,32 @@ export default function App() {
       <section id="content">
         <section id="sidebar-container">
           <section id="browser-servers">
-            <Button onClick={() => addToFriends()}>Friends</Button>
-            <Button onClick={async () => console.log(await getStreamCreation())}>Servers</Button>
+            <FriendModal
+              show={friendModal}
+              addFriend={(address) => {
+                setFriendModal(false);
+                addFriends(address);
+              }}
+              cancel={() => setFriendModal(false)}
+            />
+            <Button onClick={() => {setFriendModal(!friendModal)}}>Friends</Button>
+            <Button onClick={async () => console.log(await getStreamCreation(selectedFriend.address))}>Servers</Button>
           </section>
 
           <section id="friends-list">
             <div>
               <p>Friends List</p>
-              {friendToCanvas}
-              <Friend/>
+              {friends.map((friend) => {
+                return (
+                  <Friend
+                    key={Math.random()}
+                    address={friend.address}
+                    streamID={friend.streamID}
+                    clickFriend={(address) => clickFriend(address)}
+                    deleteFriend={(address) => deleteFriend(address)}
+                  />
+                );
+              })}
             </div>
           </section>
 
@@ -184,15 +279,21 @@ export default function App() {
             <div id="connect-area">
               <div>
                 <div id="current-activity">
-                  <p>Currently playing: Starcraft</p>
+                  <a
+                    href="https://streamr.network/core"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Reminder: If messages don't show, enable stream storage
+                  </a>
                 </div>
               </div>
             </div>
             <div>
               <ConnectButton
+                account={account}
                 connect={connect}
                 disconnect={disconnect}
-                account={account}
               />
               <p>
                 {formatEthBalance().substr(0, 6) +
@@ -204,9 +305,26 @@ export default function App() {
 
         <section id="messages-container">
           <div>
-            <div>{messagesArr}</div>
+            <div>
+              {messages.map((message) => {
+                return (
+                  <Message
+                    key={message.date}
+                    postedData={message}
+                    userAddress={account}
+                    clickMessage={(msg) => clickMessage(msg)}
+                    deleteMessage={(msg) => deleteMessage(msg)}
+                    openMessageContext={(msg) => openMessageContext(msg)}
+                  />
+                );
+              })}
+            </div>
           </div>
-          <SendMessage sendMessage={(messageText, messageDate) => addMessage(messageText, messageDate)} />
+          <SendMessage
+            sendMessage={(messageText, messageDate) =>
+              addMessage(messageText, messageDate)
+            }
+          />
         </section>
       </section>
     </>

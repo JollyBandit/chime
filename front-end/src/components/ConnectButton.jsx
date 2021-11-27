@@ -2,7 +2,7 @@ import React from 'react'
 import { shortenIfAddress } from '@usedapp/core'
 
 export const ConnectButton = (props) => {
-  const isConnected = props.account !== "";
+  const isConnected = props.account !== "" && props.account !== undefined;
   return (
     <div>
       {isConnected ? (

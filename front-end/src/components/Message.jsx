@@ -57,7 +57,7 @@ export function Message(props) {
         {linkArr}
         {tokenFeedArr}
         {regularMessage}
-        <button id="deleteMessage" onClick={() => props.deleteMessage(props.postedData)}>
+        <button className="deleteButton" id="deleteMessage" onClick={() => props.deleteMessage(props.postedData)}>
           X
         </button>
       </div>

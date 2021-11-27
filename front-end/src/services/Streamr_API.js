@@ -9,12 +9,15 @@ export const streamr = new StreamrClient({
   publishWithSignature: "never",
 })
 
-export default async function getMessageStream(){
+/**
+ * @returns Message Stream
+ */
+export default async function getOrCreateMessageStream(_address){
     //Get the address of the connected wallet
-    const address = await streamr.getAddress();
+    const ownerAddress = await streamr.getAddress();
     //Create a new message stream or select one that exists
     const stream = await streamr.getOrCreateStream({
-      id: address.toLowerCase() + "/chime-messages",
+      id: ownerAddress.toLowerCase() + "/chime-messages/" + _address,
       name: "Chime Messages",
       description: "The messages that you have sent using Chime",
       config: {
@@ -36,20 +39,29 @@ export default async function getMessageStream(){
     return stream;
   };
 
-  export const getStreamCreation = async () => {
-    const stream = await getMessageStream();
-    //Return time since epoch (milliseconds)
+  /**
+   * @returns Stream creation time since epoch (milliseconds)
+   */
+  export const getStreamCreation = async (_address) => {
+    const stream = await getOrCreateMessageStream(_address);
     return new Date(stream.dateCreated).getTime()
   }
 
-  export const getStreamLast = async () => {
-    const stream = await getMessageStream();
+  /**
+   * @returns Last message of stream
+   */
+  export const getStreamLast = async (_address) => {
+    const stream = await getOrCreateMessageStream(_address);
     const lastMessage = await streamr.getStreamLast(stream.id);
     return lastMessage[0].content;
   }
 
-  export const getStreamData = async () => {
-    const stream = await getMessageStream();
+  /**
+ * @deprecated Use streams to receive a resend callback instead
+ * @returns All messages since stream creation
+ */
+  export const getStreamData = async (_address) => {
+    const stream = await getOrCreateMessageStream(_address);
     const result = await axios.request({
       "method": "get",
       "url": "https://streamr.network/api/v1/streams/" + encodeURIComponent(stream.id) + "/data/partitions/0/from",
