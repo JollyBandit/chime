@@ -24,7 +24,6 @@ export default function App() {
   const [friendModal, setFriendModal] = useState(false);
 
   const [selectedFriend, setSelectedFriend] = useState({address: "Select A Friend", streamID: ""});
-  const [selectedStream, setSelectedStream] = useState("");
 
   function addFriends(address) {
     const storageKey = "chime-friends-" + address;
@@ -48,7 +47,7 @@ export default function App() {
     //Owner stream exists
     .then(async (stream) => {
       console.log("Owner stream exists " + stream);
-      setSelectedStream(stream.id);
+      setSelectedFriend((oldObj) => ({...oldObj, streamID: stream.id}))
     })
     //Owner stream does not exist
     .catch(async () => {
@@ -56,7 +55,7 @@ export default function App() {
       //Friend stream exists
       .then(async (stream) => {
         console.log("Friend stream exists " + stream);
-        setSelectedStream(stream.id);
+        setSelectedFriend((oldObj) => ({...oldObj, streamID: stream.id}))
       })
       //Friend stream doesn't exist
       .catch(async () => {
@@ -65,7 +64,7 @@ export default function App() {
         const stream = await getOrCreateMessageStream(address);
         grantPermissions(stream, address)
         // await stream.addToStorageNode(StorageNode.STREAMR_GERMANY);
-        setSelectedStream(stream.id);
+        setSelectedFriend((oldObj) => ({...oldObj, streamID: stream.id}))
       })
     })
   }
@@ -116,11 +115,11 @@ export default function App() {
   useEffect(() => {
     async function loadMessages() {
       try {
-        console.log(selectedStream);
+        console.log(selectedFriend.streamID);
         //Load the last 50 messages from previous session
         streamr.subscribe(
           {
-            stream: selectedStream,
+            stream: selectedFriend.streamID,
             resend: {
               last: 50,
             },
@@ -133,10 +132,10 @@ export default function App() {
     }
     //Load if the user wallet is connected
     console.log(selectedFriend)
-    if(account && messages.length === 0  && selectedStream !== ""){
+    if(account && messages.length === 0  && selectedFriend.streamID !== ""){
       loadMessages();
     }
-  }, [account, selectedFriend, selectedStream])
+  }, [account, selectedFriend])
 
   const handleMessages = useCallback((message) => {
     setMessages((oldArr) => [...oldArr, {...message}]);
@@ -152,7 +151,7 @@ export default function App() {
 
   const addMessage = async (messageText, messageDate) => {
     try{
-      const stream = await streamr.getStream(selectedStream);
+      const stream = await streamr.getStream(selectedFriend.streamID);
       await stream.publish({
         sender: account,
         message: messageText,
@@ -231,7 +230,7 @@ export default function App() {
           <input type="text" placeholder="Search..."></input>
         </div>
         <div id="contact">
-          <p>{selectedFriend.streamID}</p>
+          <p>{selectedFriend.address}</p>
         </div>
         <div>
           <input type="text" placeholder="Search..."></input>
@@ -255,7 +254,7 @@ export default function App() {
               cancel={() => setFriendModal(false)}
             />
             <Button onClick={() => {setFriendModal(!friendModal)}}>Friends</Button>
-            <Button onClick={async () => console.log(await getStreamCreation(selectedFriend.address))}>Servers</Button>
+            <Button onClick={() => console.log(selectedFriend)}>Servers</Button>
           </section>
 
           <section id="friends-list">
