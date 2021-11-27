@@ -12,6 +12,19 @@ html{
   display: flex;
 }
 
+.deleteButton{
+  background-color: #383d1f;
+  color: rgba(230,239,248,1);
+  border:none;
+  border-radius: 5px;
+  opacity: .5;
+}
+
+.deleteButton:hover{
+  opacity: 1;
+}
+
+
 /*TOP BAR*/
 
 #top-bar{
@@ -136,15 +149,6 @@ html{
   position: absolute;
   top: 0;
   right:0;
-  background-color: #383d1f;
-  color: rgba(230,239,248,1);
-  border:none;
-  border-radius: 5px;
-  opacity: .5;
-}
-
-#deleteMessage:hover{
-  opacity: 1;
 }
 
 .message.own{
@@ -263,6 +267,42 @@ html{
   outline: solid black 1px;
 }
 
+/* FRIEND MODAL */
+
+#friend-modal{
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: absolute;
+  background-color: #383d1f;
+  z-index: 1;
+  width: 30%;
+  height: 20%;
+  bottom: 60%;
+  left: 10%;
+}
+
+#friend-modal > p{
+  color: white;
+  font-size: 1.4em;
+  text-align: center;
+}
+
+#friend-modal > input{
+  flex: .2;
+  text-align: center;
+}
+
+#friend-modal > div{
+  display: flex;
+  justify-content: center;
+  flex: .2;
+}
+
+#friend-modal > div > button{
+  flex: 1;
+}
+
 /*FRIENDS*/
 
 #friends-list{
@@ -309,6 +349,11 @@ html{
   margin-left: 2%;
 }
 
+.friend-container > button{
+  margin-left: auto;
+  margin-right: 5%;
+}
+
 /*PROFILE*/
 
 #profile{
@@ -331,6 +376,15 @@ html{
   width:50%;
   height:100%;
   margin: 5%;
+}
+
+#profile #current-activity a{
+  text-decoration: none;
+  color:black;
+}
+
+#profile #current-activity a:hover{
+  color:#383d1f;
 }
 
 #profile #connect-area{
