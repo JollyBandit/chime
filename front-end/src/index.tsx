@@ -6,7 +6,7 @@ import reportWebVitals from './reportWebVitals';
 import { ChainId, Config, DAppProvider} from '@usedapp/core'
 
 const config: Config={
-  supportedChains: [ChainId.Ropsten],
+  supportedChains: [ChainId.Mainnet, ChainId.Ropsten, ChainId.Kovan, ChainId.Rinkeby],
 }
 
 ReactDOM.render(

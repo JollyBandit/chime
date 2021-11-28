@@ -10,9 +10,8 @@ import { Button } from "@mui/material";
 import { Message } from "./components/Message";
 import { Friend } from "./components/Friend";
 import { SendMessage } from "./components/SendMessage";
-import getOrCreateMessageStream, {streamr, getStreamCreation} from "./services/Streamr_API"
+import getOrCreateMessageStream, {streamr} from "./services/Streamr_API"
 import { FriendModal } from "./components/FriendModal";
-import { StorageNode } from "streamr-client";
 
 export default function App() {
   const { account, activateBrowserWallet, deactivate } = useEthers();
@@ -34,7 +33,6 @@ export default function App() {
     if(window.localStorage.getItem(storageKey) === null && ethers.utils.isAddress(address)){
       window.localStorage.setItem(storageKey, JSON.stringify(friend));
       setFriends((oldArr) => [...oldArr, friend]);
-      console.log("Added " + window.localStorage.getItem(storageKey))
     }
   }
 
@@ -46,7 +44,7 @@ export default function App() {
     await streamr.getStream(account.toLowerCase() + "/chime-messages/" + address)
     //Owner stream exists
     .then(async (stream) => {
-      console.log("Owner stream exists " + stream);
+      console.log("Owner's stream exists " + stream);
       setSelectedFriend((oldObj) => ({...oldObj, streamID: stream.id}))
     })
     //Owner stream does not exist
@@ -54,12 +52,12 @@ export default function App() {
       await streamr.getStream(address.toLowerCase() + "/chime-messages/" + account)
       //Friend stream exists
       .then(async (stream) => {
-        console.log("Friend stream exists " + stream);
+        console.log("Friend's stream exists " + stream);
         setSelectedFriend((oldObj) => ({...oldObj, streamID: stream.id}))
       })
       //Friend stream doesn't exist
       .catch(async () => {
-        console.log("Neither Stream Exists")
+        console.log("Neither stream exists - Creating a new one")
         //Create a message stream
         const stream = await getOrCreateMessageStream(address);
         grantPermissions(stream, address)
@@ -96,7 +94,6 @@ export default function App() {
         for(const key in window.localStorage){
           if(key.includes("chime-friends")){
             friendArr.push(JSON.parse(window.localStorage.getItem(key)));
-            console.log(friendArr);
           }
         }
         if(friendArr.length > 0)
@@ -115,7 +112,6 @@ export default function App() {
   useEffect(() => {
     async function loadMessages() {
       try {
-        console.log(selectedFriend.streamID);
         //Load the last 50 messages from previous session
         streamr.subscribe(
           {
@@ -131,11 +127,10 @@ export default function App() {
       }
     }
     //Load if the user wallet is connected
-    console.log(selectedFriend)
     if(account && messages.length === 0  && selectedFriend.streamID !== ""){
       loadMessages();
     }
-  }, [account, selectedFriend])
+  }, [account, selectedFriend]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleMessages = useCallback((message) => {
     setMessages((oldArr) => [...oldArr, {...message}]);
