@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useCallback } from "react";
 import "./App.css";
+import Logo from "./chime.png"
 
-import { useEtherBalance, useEthers } from "@usedapp/core";
+import { useEtherBalance, useEthers, useTokenBalance, useContractFunction, useContractCall } from "@usedapp/core";
 import { formatEther } from "@ethersproject/units";
-import { ethers } from "ethers";
+import { Contract } from "ethers";
+import { ethers, utils } from "ethers";
 
 import { ConnectButton } from "./components/ConnectButton";
 import { Button } from "@mui/material";
@@ -12,6 +14,10 @@ import { Friend } from "./components/Friend";
 import { SendMessage } from "./components/SendMessage";
 import getOrCreateMessageStream, {streamr} from "./services/Streamr_API"
 import { FriendModal } from "./components/FriendModal";
+
+import ChimeToken from "./chain-info/ChimeToken.json"
+
+const CHIME_ADDRESS = process.env.REACT_APP_CHIME_ADDRESS;
 
 export default function App() {
   const { account, activateBrowserWallet, deactivate } = useEthers();
@@ -23,6 +29,21 @@ export default function App() {
   const [friendModal, setFriendModal] = useState(false);
 
   const [selectedFriend, setSelectedFriend] = useState({address: "Select A Friend", streamID: ""});
+
+  const [messageGuessing, setMessageGuessing] = useState(false);
+
+  //ChimeToken Contract
+  const abi = ChimeToken;
+  const chimeInterface = new utils.Interface(abi);
+  const contract = new Contract(CHIME_ADDRESS, chimeInterface)
+  const { send: sendRandomWinner } = useContractFunction(contract, 'randomWinner');
+  const { send: sendRandomNumber } = useContractFunction(contract, 'getRandomNumber');
+
+  const winner = useContractCall({
+    abi: chimeInterface,
+    address: CHIME_ADDRESS,
+    method: "winner"
+  })
 
   function addFriends(address) {
     const storageKey = "chime-friends-" + address;
@@ -136,14 +157,6 @@ export default function App() {
     setMessages((oldArr) => [...oldArr, {...message}]);
   }, [])
 
-  const formatEthBalance = () => {
-    try {
-      return formatEther(etherBalance);
-    } catch (e) {
-      return "";
-    }
-  };
-
   const addMessage = async (messageText, messageDate) => {
     try{
       const stream = await streamr.getStream(selectedFriend.streamID);
@@ -152,6 +165,19 @@ export default function App() {
         message: messageText,
         date: messageDate
       })
+      if(messageGuessing){
+        //Check ChimeToken for winner
+        if(winner){
+          console.log("Need to reset random number")
+          sendRandomNumber();
+        }
+        //Select winner if number above random is guessed
+        else{
+          const guess = Math.floor(Math.random() * 100)
+          await sendRandomWinner(guess);
+          console.log("You guessed: " + guess);
+        }
+      }
     }
     catch(err){
       alert("Please connect your wallet before using Chime.");
@@ -207,6 +233,16 @@ export default function App() {
     // console.log("Stop Chime");
   };
 
+  const formatEthBalance = () => {
+    try {
+      return formatEther(etherBalance);
+    } catch (e) {
+      return "";
+    }
+  };
+
+  const userBalance = useTokenBalance(CHIME_ADDRESS, account);
+
   /*Settings Vars*/
   // const disableMessageSharing = true;
   // const burnData = true;
@@ -221,9 +257,7 @@ export default function App() {
       {/* Top Bar */}
 
       <section id="top-bar">
-        <div id="search">
-          <input type="text" placeholder="Search..."></input>
-        </div>
+        <img src={Logo} alt="Chime Logo"></img>
         <div id="contact">
           <p>{selectedFriend.address}</p>
         </div>
@@ -248,8 +282,11 @@ export default function App() {
               }}
               cancel={() => setFriendModal(false)}
             />
-            <Button onClick={() => {setFriendModal(!friendModal)}}>Friends</Button>
-            <Button onClick={() => console.log(selectedFriend)}>Servers</Button>
+            <Button onClick={() => {setFriendModal(!friendModal)}}>Add Friends</Button>
+            <Button onClick={() => setMessageGuessing(!messageGuessing)}>{messageGuessing ? 
+            "Participating in Message Guessing" : 
+            "Not Participating in Message Guessing"}
+            </Button>
           </section>
 
           <section id="friends-list">
@@ -290,8 +327,11 @@ export default function App() {
                 disconnect={disconnect}
               />
               <p>
-                {formatEthBalance().substr(0, 6) +
-                  (account !== undefined ? " Ethereum" : "Connect Wallet")}
+                {account !== undefined ? 
+                (formatEthBalance().substr(0, 6) + " Ethereum") : "Connect Wallet"}
+                <br></br>
+                {account !== undefined && userBalance !== undefined ? 
+                ((ethers.BigNumber.from(userBalance).toBigInt() / (10n ** 18n)).toString() + " Chime") : ""}
               </p>
             </div>
           </section>

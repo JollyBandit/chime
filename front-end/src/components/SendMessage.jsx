@@ -3,12 +3,13 @@ import { MessageContext } from "./MessageContext";
 import { ChainlinkFeeds } from "./ChainlinkFeeds";
 import { EmojiMenu } from "./EmojiMenu";
 
+const IPFS = require('ipfs');
+
 export const SendMessage = ({ sendMessage }) => {
   const [inputValue, setInputValue] = useState("");
   const [showContext, setShowContext] = useState();
   const [showEmojiMenu, setShowEmojiMenu] = useState();
   const [showChainlinkFeeds, setShowChainlinkFeeds] = useState();
-
 
   const keyHandler = (e) => {
     if (e.key === "Enter" && inputValue.trim() !== "") {
@@ -77,9 +78,25 @@ export const SendMessage = ({ sendMessage }) => {
     }
   }
 
+  async function onChange(e) {
+    try {
+      const ipfs = await IPFS.create({ repo: "uploaded-files"});
+      const file = e.target.files[0]
+      const uploadedFile = ipfs.add(file);
+      uploadedFile.then((res) => {
+        sendMessage("https://ipfs.io/ipfs/" + res.path, new Date().toString());
+      });
+    } catch (error) {
+      console.log('Error uploading file: ', error)
+    }
+  }
+
   return (
     <section id="send-message">
-      <button id="add-file" onClick={() => console.log("Add File")}>+</button>
+      <div>
+        <label id="add-file-label" htmlFor="add-file">+</label>
+        <input id="add-file" type="file" onChange={onChange}></input>
+      </div>
       <input
         id="message-text"
         name="message"

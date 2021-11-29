@@ -2,15 +2,21 @@ import React from "react";
 import { TokenFeed } from "./TokenFeed";
 
 export function Message(props) {
-  const urlRegex = /\b(https?:\/\/.*?\.[a-z]{2,4}\b)/g;
+  const urlRegex = (/(http(s)?:\/\/.)?(www\.)?[-a-zA-Z0-9@:%._~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_.~#?&//=]*)/g);
 
   const message = props.postedData.message;
 
+  const imgArr = [];
   const linkArr = [];
   const tokenFeedArr = [];
   const regularMessage = [];
 
-  if(message.match(urlRegex) !== null) {
+  if(message.includes("ipfs")){
+    imgArr.push(
+      <img key={message} src={message} alt={message} width="100px" height="100px"></img>
+    )
+  }
+  else if(message.match(urlRegex) !== null) {
     // let sel = message.match(urlRegex)[0];
     // const selStartIndex = message.indexOf(sel);
     // const selEndIndex = selStartIndex + message.length;
@@ -54,6 +60,7 @@ export function Message(props) {
           <p id="messageDate">{props.postedData.date}</p>
         </div>
         {/* Message Content */}
+        {imgArr}
         {linkArr}
         {tokenFeedArr}
         {regularMessage}

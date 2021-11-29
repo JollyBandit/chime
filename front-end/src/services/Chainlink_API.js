@@ -20,7 +20,10 @@ tokenAddr.set("BCH", "0x9F0F69428F923D6c95B781F89E165C9b2df9789D")
 tokenAddr.set("MKR", "0xec1D1B3b0443256cc3860e24a46F108e699484Aa")
 tokenAddr.set("SUSHI", "0xCc70F09A6CC17553b2E31954cD36E4A2d89501f7")
 tokenAddr.set("XRP", "0xCed2660c6Dd1Ffd856A5A82C67f3482d88C50b12")
-// tokenAddr.set("FIL", "0x1A31D42149e82Eb99777f903C08A2E41A00085d3")
+tokenAddr.set("FIL", "0x1A31D42149e82Eb99777f903C08A2E41A00085d3")
+tokenAddr.set("GRT", "0x86cF33a451dE9dc61a2862FD94FF4ad4Bd65A5d2")
+tokenAddr.set("MIR", "0x97e4f2Bc7231f2AFA05c51F524A80E1c8bF944e5")
+tokenAddr.set("NMR", "0xcC445B35b3636bC7cC7051f4769D8982ED0d449A")
 
 export const tokenAddrArr = Array.from(tokenAddr, ([key, addr]) => ({key, addr}));
 

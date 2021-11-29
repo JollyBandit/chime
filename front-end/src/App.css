@@ -31,12 +31,9 @@ html{
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  background: rgba(0,0,0,0);
   height:60px;
-}
-
-#top-bar:hover{
-  outline: solid black 1px;
+  background-color: #383d1f;
+  color: white;
 }
 
 #top-bar input{
@@ -48,7 +45,7 @@ html{
 }
 
 #top-bar input::placeholder{
-  color:black;
+  color: white;
 }
 
 #top-bar input:focus-visible{
@@ -56,12 +53,17 @@ html{
   outline: none;
 }
 
-#top-bar > *:not(#search){
+#top-bar > *{
   display: flex;
   align-items: center;
   justify-content: flex-start;
   height: 100%;
   flex-grow: 1;
+}
+
+#top-bar > img{
+  object-fit: contain;
+  height: 75%;
 }
 
 #search{
@@ -111,7 +113,7 @@ html{
   margin: 0;
 }
 
-.message img{
+.message > img{
   border-radius: 314px;
   max-height: 75px;
   margin: 0 1em 0 0;
@@ -130,6 +132,12 @@ html{
   justify-content: flex-start;
   align-items: center;
   margin-bottom: 1em;
+}
+
+.message > div > img{
+  object-fit: contain;
+  width: 250px;
+  height: 250px;
 }
 
 #messageID{
@@ -174,21 +182,26 @@ html{
   border-radius: 20px;
 }
 
-#send-message button{
+#send-message button, #add-file-label{
   font-size: 1.2em;
   background-color: rgba(255, 255, 255, 0);
   color: rgba(255, 255, 255, .5);
   border: none;
 }
 
-#send-message #add-file{
+#send-message #add-file-label{
   background-color: rgba(255, 255, 255, .5);
   color:#383d1f;
   border-radius: 314px;
+  padding: 0 .4em 0 .4em;
 }
 
-#send-message #add-file:hover{
+#send-message #add-file-label:hover{
   background-color: rgba(255, 255, 255, .8);
+}
+
+#send-message #add-file{
+  display: none;
 }
 
 #send-message #chainlink-feed{
@@ -264,7 +277,7 @@ html{
 }
 
 #browser-servers:hover{
-  outline: solid black 1px;
+  background: rgba(0,0,0,.01);
 }
 
 /* FRIEND MODAL */
@@ -309,6 +322,10 @@ html{
   flex-grow: 1;
   overflow-y: auto;
   visibility: hidden;
+}
+
+#friends-list:hover{
+  background: rgba(0,0,0,.01);
 }
 
 #friends-list > div{
@@ -365,7 +382,7 @@ html{
 }
 
 #profile:hover{
-  outline: solid black 1px;
+  background: rgba(0,0,0,.01);
 }
 
 /*Both divs inside profile container*/
@@ -686,9 +703,12 @@ html{
 /*EMOJI MENU*/
 
 #emoji-menu{
-  display: flex;
+  display: grid;
+  grid-template-columns: auto auto auto auto auto auto;
+  gap: .5em;
+  padding: .5%;
   right: 3%;
-  min-height: 10vh;
+  /* min-height: 10vh; */
   min-width: 10vw;
 }
 
