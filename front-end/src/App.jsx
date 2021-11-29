@@ -16,7 +16,7 @@ import { FriendModal } from "./components/FriendModal";
 import getOrCreateMessageStream, {streamr} from "./services/Streamr_API"
 import ChimeToken from "./chain-info/ChimeToken.json"
 
-const CHIME_ADDRESS = process.env.REACT_APP_CHIME_ADDRESS;
+const CHIME_ADDRESS = "0x5372f9Ba61d912bd5187281a593D16c0B5F83C44";
 
 export default function App() {
   const { account, activateBrowserWallet, deactivate } = useEthers();
