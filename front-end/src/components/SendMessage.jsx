@@ -5,7 +5,7 @@ import { EmojiMenu } from "./EmojiMenu";
 
 const IPFS = require('ipfs');
 
-export const SendMessage = ({ sendMessage }) => {
+export const SendMessage = ( props ) => {
   const [inputValue, setInputValue] = useState("");
   const [showContext, setShowContext] = useState();
   const [showEmojiMenu, setShowEmojiMenu] = useState();
@@ -15,7 +15,7 @@ export const SendMessage = ({ sendMessage }) => {
     if (e.key === "Enter" && inputValue.trim() !== "") {
 
       //createMessage();
-      sendMessage(inputValue, new Date().toString());
+      props.sendMessage(inputValue, new Date().toString());
       setInputValue("");
     }
   };
@@ -24,7 +24,7 @@ export const SendMessage = ({ sendMessage }) => {
     if (inputValue.trim() !== ""){
 
       //createMessage();
-      sendMessage(inputValue, new Date().toString());
+      props.sendMessage(inputValue, new Date().toString());
       setInputValue("");
     }
   };
@@ -84,7 +84,7 @@ export const SendMessage = ({ sendMessage }) => {
       const file = e.target.files[0]
       const uploadedFile = ipfs.add(file);
       uploadedFile.then((res) => {
-        sendMessage("https://ipfs.io/ipfs/" + res.path, new Date().toString());
+        props.sendMessage("https://ipfs.io/ipfs/" + res.path, new Date().toString());
       });
     } catch (error) {
       console.log('Error uploading file: ', error)
@@ -95,7 +95,7 @@ export const SendMessage = ({ sendMessage }) => {
     <section id="send-message">
       <div>
         <label id="add-file-label" htmlFor="add-file">+</label>
-        <input id="add-file" type="file" onChange={onChange}></input>
+        <input id="add-file" type="file" onChange={onChange} disabled={props.disabled}></input>
       </div>
       <input
         id="message-text"
@@ -107,17 +107,23 @@ export const SendMessage = ({ sendMessage }) => {
         onChange={(e) => setInputValue(e.target.value)}
         onInput={(e) => createMessageContext(e)}
         onKeyPress={(e) => keyHandler(e)}
+        disabled={props.disabled}
       ></input>
       {showContext}
       <button id="chainlink-feed"
         onClick={(e) => createChainlinkFeeds(e)}
+        disabled={props.disabled}
       >&#x2B21;</button>
       {showChainlinkFeeds}
       <button id="pick-emoji"
         onClick={(e) => createEmojiMenu(e)}
+        disabled={props.disabled}
       >&#x1F60A;</button>
       {showEmojiMenu}
-      <button id="message-submit" onClick={(e) => buttonHandler(e)}>Submit</button>
+      <button id="message-submit" 
+      onClick={(e) => buttonHandler(e)}
+      disabled={props.disabled}
+      >Submit</button>
     </section>
   );
 };

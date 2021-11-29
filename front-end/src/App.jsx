@@ -17,6 +17,7 @@ import getOrCreateMessageStream, {streamr} from "./services/Streamr_API"
 import ChimeToken from "./chain-info/ChimeToken.json"
 
 const CHIME_ADDRESS = "0x5372f9Ba61d912bd5187281a593D16c0B5F83C44";
+const STREAMR_GERMANY = '0x31546eEA76F2B2b3C5cC06B1c93601dc35c9D916';
 
 export default function App() {
   const { account, activateBrowserWallet, deactivate } = useEthers();
@@ -81,7 +82,7 @@ export default function App() {
         //Create a message stream
         const stream = await getOrCreateMessageStream(address);
         grantPermissions(stream, address)
-        // await stream.addToStorageNode(StorageNode.STREAMR_GERMANY);
+        await stream.addToStorageNode(STREAMR_GERMANY);
         setSelectedFriend((oldObj) => ({...oldObj, streamID: stream.id}))
       })
     })
@@ -92,6 +93,7 @@ export default function App() {
     await _stream.grantPermission("stream_publish", _address);
     await _stream.grantPermission("stream_subscribe", _address);
     await _stream.grantPermission("stream_delete", _address);
+    await _stream.grantPermission("stream_edit", _address);
   }
 
   function deleteFriend(address){
@@ -264,7 +266,7 @@ export default function App() {
           <input type="text" placeholder="Search..."></input>
         </div>
         <div>
-          <button className="chime-button">Notifications</button>
+          <button className="chime-button" onClick={() => console.log("Notifications")}>Notifications</button>
         </div>
       </section>
 
@@ -314,7 +316,7 @@ export default function App() {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    Reminder: If messages don't show, enable stream storage
+                    Access your data here!
                   </a>
                 </div>
               </div>
@@ -354,6 +356,7 @@ export default function App() {
             </div>
           </div>
           <SendMessage
+            disabled={selectedFriend.streamID === "" ? true : false}
             sendMessage={(messageText, messageDate) =>
               addMessage(messageText, messageDate)
             }

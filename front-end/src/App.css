@@ -302,6 +302,7 @@ html{
   height: 20%;
   bottom: 60%;
   left: 10%;
+  padding: 1%;
 }
 
 #friend-modal > p{
