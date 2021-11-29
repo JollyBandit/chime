@@ -24,6 +24,7 @@ export const FriendModal = (props) => {
             </input>
             <div>
                 <button
+                className="chime-button"
                 onClick={() => {
                     props.addFriend(inputValue);
                     setInputValue("");
@@ -32,6 +33,7 @@ export const FriendModal = (props) => {
                 Add Friend
                 </button>
                 <button
+                className="chime-button"
                 onClick={() => {
                     props.cancel();
                     setInputValue("");

@@ -6,7 +6,7 @@ export const Friend = (props) => {
         <div className = "friend-container" onClick={() => props.clickFriend(props.address)}>
             <img src={"https://robohash.org/" + props.address + ".png?set=set5"} alt="Friend"></img>
             <p>{shortenIfAddress(props.address)}</p>
-            <button className="deleteButton" onClick={() => props.deleteFriend(props.address)}>X</button>
+            <button className="chime-button" onClick={() => props.deleteFriend(props.address)}>X</button>
         </div>
     )
 }

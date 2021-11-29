@@ -8,13 +8,12 @@ import { Contract } from "ethers";
 import { ethers, utils } from "ethers";
 
 import { ConnectButton } from "./components/ConnectButton";
-import { Button } from "@mui/material";
 import { Message } from "./components/Message";
 import { Friend } from "./components/Friend";
 import { SendMessage } from "./components/SendMessage";
-import getOrCreateMessageStream, {streamr} from "./services/Streamr_API"
 import { FriendModal } from "./components/FriendModal";
 
+import getOrCreateMessageStream, {streamr} from "./services/Streamr_API"
 import ChimeToken from "./chain-info/ChimeToken.json"
 
 const CHIME_ADDRESS = process.env.REACT_APP_CHIME_ADDRESS;
@@ -265,7 +264,7 @@ export default function App() {
           <input type="text" placeholder="Search..."></input>
         </div>
         <div>
-          <Button>Notifications</Button>
+          <button className="chime-button">Notifications</button>
         </div>
       </section>
 
@@ -282,11 +281,11 @@ export default function App() {
               }}
               cancel={() => setFriendModal(false)}
             />
-            <Button onClick={() => {setFriendModal(!friendModal)}}>Add Friends</Button>
-            <Button onClick={() => setMessageGuessing(!messageGuessing)}>{messageGuessing ? 
+            <button className="chime-button" onClick={() => {setFriendModal(!friendModal)}}>Add Friends</button>
+            <button className="chime-button" onClick={() => setMessageGuessing(!messageGuessing)}>{messageGuessing ? 
             "Participating in Message Guessing" : 
             "Not Participating in Message Guessing"}
-            </Button>
+            </button>
           </section>
 
           <section id="friends-list">

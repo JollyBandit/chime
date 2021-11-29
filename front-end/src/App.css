@@ -12,16 +12,18 @@ html{
   display: flex;
 }
 
-.deleteButton{
+.chime-button{
   background-color: #383d1f;
   color: rgba(230,239,248,1);
   border:none;
   border-radius: 5px;
-  opacity: .5;
+  opacity: .6;
 }
 
-.deleteButton:hover{
+.chime-button:hover{
   opacity: 1;
+  outline: groove 2px rgba(230,239,248,.2);
+  border-radius: 0px;
 }
 
 
@@ -273,11 +275,18 @@ html{
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
   min-height: 12vh;
 }
 
 #browser-servers:hover{
   background: rgba(0,0,0,.01);
+}
+
+#browser-servers > button{
+  width: 75%;
+  margin: 2%;
+  padding: 2%;
 }
 
 /* FRIEND MODAL */
