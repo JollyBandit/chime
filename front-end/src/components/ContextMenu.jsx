@@ -24,6 +24,12 @@ const ContextMenu = (props) => {
     };
   };
 
+  const optionIcons = new Map();
+  optionIcons.set("select", "➢");
+  optionIcons.set("send", "🡽");
+  optionIcons.set("copy", "❐");
+  optionIcons.set("delete", "X");
+
   if (display) {
     return (
       <ul
@@ -32,25 +38,26 @@ const ContextMenu = (props) => {
         className="show-context-menu"
         onClick={(e) => e.stopPropagation()}
       >
-      {props.options.map((option) => {
-          let optionName;
+      {props.options.map((optionName) => {
+          let option;
           for(let i = 0; i < Object.keys(props).length; i++){
-              if((Object.keys(props)[i] !== "options" || Object.keys(props)[i] !== "anchorPoint") && Object.keys(props)[i] === option){
-                  optionName = Object.keys(props)[i];
+              if((Object.keys(props)[i] !== "options" || Object.keys(props)[i] !== "anchorPoint") && Object.keys(props)[i] === optionName){
+                  option = Object.keys(props)[i];
               }
           }
           return (
-            <li key={optionName}>
+            <li key={option}>
               <button
-                key={optionName}
+                key={option}
                 onClick={(e) => {
                   e.stopPropagation();
                   //This is not a error, silly typescript
-                  props.[optionName]();
+                  props.[option]();
                   setAnchorPoint({ x: 0, y: 0 });
                 }}
               >
-                {option}
+                <p id="context-icon">{optionIcons.get(optionName)}</p>
+                <p>{optionName}</p>
               </button>
             </li>
           );

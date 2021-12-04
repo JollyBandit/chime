@@ -55,12 +55,22 @@ html{
   color: var(--sky-white);
   background-color: var(--mountain-gray);
   border: none;
-  padding: .5em 2.5em .5em 2.5em;
 }
 
 #context-menu li button:hover{
   background-color: var(--gravel-black);
   cursor: pointer;
+}
+
+#context-menu li button p{
+  margin: 0;
+  padding: 0;
+  padding: .5em 2em .5em 2em;
+}
+
+#context-menu li button #context-icon{
+  padding: .5em 0 .5em .5em;
+  width: 16px;
 }
 
 .show-context-menu{
