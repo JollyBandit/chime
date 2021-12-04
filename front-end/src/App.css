@@ -1,10 +1,20 @@
+:root{
+  --mountain-gray: rgba(77, 77, 82, 1);
+  --lake-blue: rgba(179, 225, 238, 1);
+  --sky-white: rgba(230, 239, 248, 1);
+  --forest-green: rgba(56, 61, 31, 1);
+  --gravel-black: rgba(22, 24, 12, 1);
+  --chainlink-blue: rgba(55, 91, 210, 1);
+  --transparent: rgba(0, 0, 0, 0);
+}
+
 html{
   overflow: hidden;
 }
 
 #root{
-  background: rgb(230,239,248);
-  background: radial-gradient(circle, rgba(230,239,248,1) 0%, rgba(179,225,238,1) 150%);
+  background: var(--sky-white);
+  background: radial-gradient(circle, var(--sky-white) 0%, var(--lake-blue) 150%);
   height:100vh;
 }
 
@@ -13,8 +23,8 @@ html{
 }
 
 .chime-button{
-  background-color: #383d1f;
-  color: rgba(230,239,248,1);
+  background-color: var(--forest-green);
+  color: var(--sky-white);
   border:none;
   border-radius: 5px;
   opacity: .6;
@@ -26,6 +36,36 @@ html{
   border-radius: 0px;
 }
 
+/*CONTEXT MENU*/
+
+#context-menu{
+  display: none;
+  flex-direction: column;
+  position: absolute;
+  list-style: none;
+  background-color: var(--mountain-gray);
+  border-radius: .2em;
+  padding: .4em 0 .4em 0;
+}
+
+#context-menu li button{
+  display: flex;
+  flex: 1;
+  width: 100%;
+  color: var(--sky-white);
+  background-color: var(--mountain-gray);
+  border: none;
+  padding: .5em 2.5em .5em 2.5em;
+}
+
+#context-menu li button:hover{
+  background-color: var(--gravel-black);
+  cursor: pointer;
+}
+
+.show-context-menu{
+  display: flex !important;
+}
 
 /*TOP BAR*/
 
@@ -34,12 +74,12 @@ html{
   justify-content: flex-start;
   align-items: center;
   height:60px;
-  background-color: #383d1f;
+  background-color: var(--forest-green);
   color: white;
 }
 
 #top-bar input{
-  background-color: rgba(0,0,0,0);
+  background-color: var(--transparent);
   color: black;
   width:100%;
   height:100%;
@@ -79,8 +119,8 @@ html{
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  background: rgb(230,239,248);
-  background: rgba(0,0,0,0);
+  background: var(--sky-white);
+  background: var(--transparent);
   height: calc(100vh - 60px);
   flex: 3;
 }
@@ -177,7 +217,7 @@ html{
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #383d1f;
+  background-color: var(--forest-green);
   min-height: 50px;
   margin:1.5%;
   padding: 0 1% 0 1%;
@@ -186,14 +226,14 @@ html{
 
 #send-message button, #add-file-label{
   font-size: 1.2em;
-  background-color: rgba(255, 255, 255, 0);
+  background-color: var(--transparent);
   color: rgba(255, 255, 255, .5);
   border: none;
 }
 
 #send-message #add-file-label{
   background-color: rgba(255, 255, 255, .5);
-  color:#383d1f;
+  color:var(--forest-green);
   border-radius: 314px;
   padding: 0 .4em 0 .4em;
 }
@@ -206,6 +246,18 @@ html{
   display: none;
 }
 
+#send-message #send-crypto{
+  font-size: 1.8em;
+  letter-spacing:1px;
+}
+
+#send-message #send-crypto:hover{
+  font-size: 1.8em;
+  color: var(--gravel-black);
+  text-shadow: 1px 0 var(--gravel-black);
+  letter-spacing:1px;
+}
+
 #send-message #chainlink-feed{
   font-size: 2em;
   font-weight: 900;
@@ -215,8 +267,8 @@ html{
 #send-message #chainlink-feed:hover{
   font-size: 2em;
   font-weight: 900;
-  color: rgba(55, 91, 210, 1);
-  text-shadow: 1px 0 rgba(55, 91, 210, 1);
+  color: var(--chainlink-blue);
+  text-shadow: 1px 0 var(--chainlink-blue);
   letter-spacing:1px;
 }
 
@@ -227,7 +279,7 @@ html{
 
 #send-message #pick-emoji:hover{
   filter: none;
-  color: rgba(255, 255, 255, 1);
+  color: white;
   transform: scale(1.4);
 }
 
@@ -237,15 +289,15 @@ html{
 
 #send-message p{
   font-size: 20px;
-  color:#e6eff8;
+  color:var(--sky-white);
   margin: 0 1% 0 1%;
 }
 
 #message-text{
-  color: #e6eff8;
+  color: var(--sky-white);
   width:75%;
   height:100%;
-  background-color: rgba(0,0,0,0);
+  background-color: var(--transparent);
   border: none;
 }
 
@@ -261,7 +313,7 @@ html{
 /*SIDEBAR CONTAINER*/
 
 #sidebar-container{
-  background: rgba(0,0,0,0);
+  background: var(--transparent);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -296,7 +348,7 @@ html{
   flex-direction: column;
   justify-content: space-between;
   position: absolute;
-  background-color: #383d1f;
+  background-color: var(--forest-green);
   z-index: 1;
   width: 30%;
   height: 20%;
@@ -411,7 +463,7 @@ html{
 }
 
 #profile #current-activity a:hover{
-  color:#383d1f;
+  color:var(--forest-green);
 }
 
 #profile #connect-area{
@@ -434,7 +486,7 @@ html{
   width:100%;
   height: 50px;
   border-radius: 314px;
-  background-color: rgba(179,225,238,1);
+  background-color: var(--lake-blue);
   border: none;
   padding: 0;
 }
@@ -456,19 +508,19 @@ html{
 /*SEND BAR OVERLAY BUTTONS*/
 
 .overlay{
-  background-color: #383d1f;
+  background-color: var(--forest-green);
   position: absolute;
   bottom:calc(2% + 50px);
 }
 
 .overlay button:hover{
-  color:rgba(179,225,238,1) !important;
+  color:var(--lake-blue) !important;
 }
 
 /*MESSAGE CONTEXT*/
 
 #msg-context{
-  background-color: #383d1f;
+  background-color: var(--forest-green);
   position: absolute;
   min-height: 40%;
   min-width: 53vw;
@@ -486,7 +538,7 @@ html{
 }
 
 #msg-context > div button:hover{
-  color: rgba(179,225,238,1);
+  color: var(--lake-blue);
 }
 
 /*CHAINLINK FEEDS*/
@@ -505,7 +557,7 @@ html{
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 6px dotted rgba(179,225,238,1);
+  border: 6px dotted var(--lake-blue);
   border-radius: 314px;
   animation: spin 3s linear infinite;
 }
@@ -518,8 +570,8 @@ html{
 /*TOKEN FEED*/
 #token-feed{
   position: relative;
-  background-color: rgba(230,239,248,1);
-  border: #383d1f 5px outset;
+  background-color: var(--sky-white);
+  border: var(--forest-green) 5px outset;
   display: flex;
   flex-direction: column;
   width: 250px;
@@ -531,7 +583,7 @@ html{
 
 #token-feed .static-feed{
   display: none;
-  background-color: rgba(0,0,0,0);
+  background-color: var(--transparent);
 }
 
 #token-feed .wave{
@@ -604,7 +656,7 @@ html{
 }
 
 #token-feed:hover{
-  background-color: rgba(179,225,238,1);
+  background-color: var(--lake-blue);
 }
 
 #token-feed > div{
@@ -662,7 +714,7 @@ html{
 
 #token-feed #credit-div #credit{
   font-size: .75em;
-  color:rgba(55, 91, 210, 1);
+  color:var(--chainlink-blue);
 }
 
 #token-feed #credit-div :not(#credit){
@@ -676,10 +728,10 @@ html{
   margin-left: 7%;
   width: 1.3em;
   height: 1.3em;
-  background-color: rgba(230,239,248,1);
+  background-color: var(--sky-white);
   border-radius: 50%;
   vertical-align: middle;
-  border: 2px dotted #383d1f;
+  border: 2px dotted var(--forest-green);
   appearance: none;
   -webkit-appearance: none;
   outline: none;
@@ -698,7 +750,7 @@ html{
 }
 
 #token-feed input:checked{
-  background-color: #383d1f;
+  background-color: var(--forest-green);
   animation: blink 2s linear infinite;
 }
 
