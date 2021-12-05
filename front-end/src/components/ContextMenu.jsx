@@ -7,8 +7,9 @@ const ContextMenu = (props) => {
 
   const handleClick = useCallback(() => {
     setAnchorPoint({ x: 0, y: 0 });
+    if(display)
     props.localAnchorPoint({ x: 0, y: 0 });
-  }, [props]);
+  }, [props, display]);
   const handleContext = useCallback(() => {
     setAnchorPoint({ x: 0, y: 0 });
     if(display){
