@@ -422,6 +422,10 @@ html{
   text-align: center;
 }
 
+.selected-friend, .selected-friend:hover{
+  background-color: rgba(22, 24, 12, .15) !important;
+}
+
 .friend-container{
   display: flex;
   padding: 2.5%;
@@ -430,7 +434,7 @@ html{
 }
 
 .friend-container:hover{
-  background-color: rgba(22, 24, 12, .2);
+  background-color: rgba(22, 24, 12, .05);
 }
 
 .friend-container img{

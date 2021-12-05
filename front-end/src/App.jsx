@@ -60,6 +60,8 @@ export default function App() {
   }
 
   async function clickFriend(address){
+    //Unsubscribe to last friend before selecting next friend (to prevent duplicate messages)
+    selectedFriend.streamID !== "" && await streamr.unsubscribe(selectedFriend.streamID);
     setMessages([]);
     setLoaded(false);
     notifications.forEach(notification => {
@@ -152,7 +154,7 @@ export default function App() {
         const storageNodes = await stream.getStorageNodes();
         //Load the last 50 messages from previous session if messages are being stored
         if(storageNodes.length !== 0){
-          streamr.resend(
+          await streamr.resend(
             {
               stream: selectedFriend.streamID,
               resend: {
@@ -167,12 +169,12 @@ export default function App() {
               timeoutID = setTimeout(() => {
                 //Load messages after all data has been collected
                 setMessages((oldArr) => [...oldArr, ...dataArr]);
-                setLoaded(true);
               }, 100);
             }
           )
+          setLoaded(true);
         }
-        //Users haven't messaged each other yet
+        //Messages are not stored, but we will still load
         else{
           setLoaded(true);
         }
@@ -186,7 +188,7 @@ export default function App() {
               const notification = new Notification(data.sender + " sent you a message!", {body: data.message, icon: "https://robohash.org/" + data.sender + ".png?set=set5"});
               setNotifications((oldArr) => [...oldArr, notification]);
             }
-            setMessages((oldArr) => [...oldArr, {...data}]);
+            setMessages((oldArr) => [...oldArr, data]);
           }
         )
       } catch (err) {
@@ -264,7 +266,7 @@ export default function App() {
     });
     setSelectedFriend({address: "Select A Friend", streamID: ""});
     if(streamr){
-      streamr.getSubscriptions()[0].unsubscribe()
+      streamr.getSubscriptions().forEach((sub) => sub.unsubscribe());
       streamr.disconnect()
     }
     // if(disableMessageSharing){
@@ -344,6 +346,7 @@ export default function App() {
                 return (
                   <Friend
                     key={Math.random()}
+                    selected={selectedFriend.address === friend.address}
                     address={friend.address}
                     streamID={friend.streamID}
                     clickFriend={(address) => clickFriend(address)}
@@ -391,7 +394,7 @@ export default function App() {
               {messages.map((message) => {
                 return (
                   <Message
-                    key={message.date}
+                    key={Math.random()}
                     postedData={message}
                     userAddress={account}
                     clickMessage={(msg) => clickMessage(msg)}

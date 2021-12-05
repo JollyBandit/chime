@@ -9,9 +9,10 @@ export const Friend = (props) => {
 
     return (
         <div 
-        className = "friend-container" 
+        className = {props.selected ? "friend-container selected-friend" : "friend-container"} 
         onClick={() => {
-            props.clickFriend(props.address)
+            //If not selected, allow user to select friend
+            !props.selected && props.clickFriend(props.address)
         }} 
         onContextMenu={(e) => {
             setTimeout(() => setAnchorPoint({x: e.pageX, y: e.pageY}), 1);
@@ -21,7 +22,8 @@ export const Friend = (props) => {
             <ContextMenu 
             anchorPoint={{x: anchorPoint.x, y: anchorPoint.y}} 
             localAnchorPoint={(ap) => setAnchorPoint(ap)}
-            select={() => props.clickFriend(props.address)} 
+            //If not selected, allow user to select friend
+            select={() => !props.selected && props.clickFriend(props.address)} 
             send={() => {
                 if(state === 'None'){
                     console.log(state);
