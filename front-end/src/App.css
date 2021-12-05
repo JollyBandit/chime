@@ -184,6 +184,7 @@ html{
   justify-content: flex-start;
   align-items: center;
   margin-bottom: 1em;
+  white-space: nowrap;
 }
 
 .message > div > img{
@@ -205,16 +206,18 @@ html{
   word-break: break-word;
 }
 
-#deleteMessage{
-  position: absolute;
-  top: 0;
-  right:0;
-}
-
 .message.own{
   display: flex;
   flex-direction: row-reverse;
   justify-content: flex-start;
+}
+
+.message.own > div{
+  align-items: flex-end;
+}
+
+.message.own > div > div{
+  flex-direction: row-reverse;
 }
 
 .message.own p{
@@ -436,11 +439,6 @@ html{
 
 .friend-container p{
   margin-left: 2%;
-}
-
-.friend-container > button{
-  margin-left: auto;
-  margin-right: 5%;
 }
 
 /*PROFILE*/

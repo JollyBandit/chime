@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { TokenFeed } from "./TokenFeed";
 import ContextMenu from "./ContextMenu";
+import { useEthers } from "@usedapp/core";
 
 export function Message(props) {
+  const { account } = useEthers();
   const [anchorPoint, setAnchorPoint] = useState({x: 0, y: 0});
 
   const urlRegex = (/(http(s)?:\/\/.)?(www\.)?[-a-zA-Z0-9@:%._~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_.~#?&//=]*)/g);
-
   const message = props.postedData.message;
 
   const imgArr = [];
@@ -53,7 +54,7 @@ export function Message(props) {
 
   return (
     <div
-      className={props.ownMessage ? "message own" : "message"}
+      className={props.postedData.sender === account ? "message own" : "message"}
       onClick={() => props.clickMessage(props.postedData)}
       onContextMenu={(e) => {
             setAnchorPoint({x: e.pageX, y: e.pageY});
@@ -61,16 +62,9 @@ export function Message(props) {
       }}
     >
       <ContextMenu 
-      options={["copy", "delete"]}
       anchorPoint={{x: anchorPoint.x, y: anchorPoint.y}} 
-      copy={() => {
-          navigator.clipboard.writeText(props.postedData.message);
-          setAnchorPoint({x: 0, y: 0});
-      }} 
-      delete={() => {
-          props.deleteMessage(props.postedData);
-          setAnchorPoint({x: 0, y: 0});
-      }}
+      copy={() => {navigator.clipboard.writeText(props.postedData.message)}} 
+      delete={() => {props.deleteMessage(props.postedData)}}
       />
       <img src={"https://robohash.org/" + props.postedData.sender + ".png?set=set5"} alt="User"></img>
       <div>
@@ -83,9 +77,6 @@ export function Message(props) {
         {linkArr}
         {tokenFeedArr}
         {regularMessage}
-        <button className="chime-button" id="deleteMessage" onClick={() => props.deleteMessage(props.postedData)}>
-          X
-        </button>
       </div>
     </div>
   );

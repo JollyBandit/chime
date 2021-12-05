@@ -19,7 +19,6 @@ export const Friend = (props) => {
         }}
         >
             <ContextMenu 
-            options={["select", "send", "delete"]}
             anchorPoint={{x: anchorPoint.x, y: anchorPoint.y}} 
             select={() => props.clickFriend(props.address)} 
             send={() => {

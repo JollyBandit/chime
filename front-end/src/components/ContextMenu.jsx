@@ -2,20 +2,36 @@ import { useState, useCallback, useEffect } from "react";
 
 const ContextMenu = (props) => {
   const [anchorPoint, setAnchorPoint] = useState(props.anchorPoint);
+  const [validProps, setValidProps] = useState();
   const display = anchorPoint.x !== 0 && anchorPoint.y !== 0;
 
   const handleClick = useCallback(() => setAnchorPoint({ x: 0, y: 0 }), []);
+  const handleContext = useCallback(() => setAnchorPoint({ x: 0, y: 0 }), []);
 
   useEffect(() => {
     document.addEventListener("click", handleClick);
+    document.addEventListener("contextmenu", handleContext);
     return () => {
       document.removeEventListener("click", handleClick);
+      document.removeEventListener("contextmenu", handleContext);
     };
   });
 
   useEffect(() => {
       setAnchorPoint(props.anchorPoint);
   }, [props.anchorPoint])
+
+  useEffect(() => {
+      const validProps = [];
+      let count = 0;
+      Object.values(props).forEach((prop) => {
+          if(typeof(prop) === 'function'){
+              validProps.push(Object.keys(props)[count]);
+          }
+          count++;
+      })
+      setValidProps(validProps);
+  }, [setValidProps, props])
 
   const style = () => {
     return {
@@ -38,30 +54,24 @@ const ContextMenu = (props) => {
         className="show-context-menu"
         onClick={(e) => e.stopPropagation()}
       >
-      {props.options.map((optionName) => {
-          let option;
-          for(let i = 0; i < Object.keys(props).length; i++){
-              if((Object.keys(props)[i] !== "options" || Object.keys(props)[i] !== "anchorPoint") && Object.keys(props)[i] === optionName){
-                  option = Object.keys(props)[i];
-              }
-          }
-          return (
-            <li key={option}>
-              <button
-                key={option}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  //This is not a error, silly typescript
-                  props.[option]();
-                  setAnchorPoint({ x: 0, y: 0 });
-                }}
-              >
-                <p id="context-icon">{optionIcons.get(optionName)}</p>
-                <p>{optionName}</p>
-              </button>
-            </li>
-          );
-      })}
+        {validProps.map((prop) => {
+            return (
+                <li key={prop}>
+                <button
+                    key={prop}
+                    onClick={(e) => {
+                    e.stopPropagation();
+                    //This is not a error, silly typescript
+                    props.[prop]();
+                    setAnchorPoint({ x: 0, y: 0 });
+                    }}
+                >
+                    <p id="context-icon">{optionIcons.get(prop)}</p>
+                    <p>{prop}</p>
+                </button>
+                </li>
+            );
+        })}
       </ul>
     );
   }
