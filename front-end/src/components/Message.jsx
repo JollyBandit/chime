@@ -57,13 +57,14 @@ export function Message(props) {
       className={props.postedData.sender === account ? "message own" : "message"}
       onClick={() => props.clickMessage(props.postedData)}
       onContextMenu={(e) => {
-            setAnchorPoint({x: e.pageX, y: e.pageY});
+            setTimeout(() => setAnchorPoint({x: e.pageX, y: e.pageY}), 1);
             e.preventDefault();
       }}
     >
       <ContextMenu 
-      anchorPoint={{x: anchorPoint.x, y: anchorPoint.y}} 
-      copy={() => {navigator.clipboard.writeText(props.postedData.message)}} 
+      anchorPoint={{x: anchorPoint.x, y: anchorPoint.y}}
+      localAnchorPoint={(ap) => setAnchorPoint(ap)}
+      copy={() => {navigator.clipboard.writeText(props.postedData.message)}}
       delete={() => {props.deleteMessage(props.postedData)}}
       />
       <img src={"https://robohash.org/" + props.postedData.sender + ".png?set=set5"} alt="User"></img>

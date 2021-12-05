@@ -46,6 +46,7 @@ html{
   background-color: var(--mountain-gray);
   border-radius: .2em;
   padding: .4em 0 .4em 0;
+  z-index: 10;
 }
 
 #context-menu li button{
@@ -315,7 +316,7 @@ html{
 }
 
 #message-text::placeholder{
-  color:white;
+  color:var(--mountain-gray);
 }
 
 #message-text:focus-visible{

@@ -5,8 +5,16 @@ const ContextMenu = (props) => {
   const [validProps, setValidProps] = useState();
   const display = anchorPoint.x !== 0 && anchorPoint.y !== 0;
 
-  const handleClick = useCallback(() => setAnchorPoint({ x: 0, y: 0 }), []);
-  const handleContext = useCallback(() => setAnchorPoint({ x: 0, y: 0 }), []);
+  const handleClick = useCallback(() => {
+    setAnchorPoint({ x: 0, y: 0 });
+    props.localAnchorPoint({ x: 0, y: 0 });
+  }, [props]);
+  const handleContext = useCallback(() => {
+    setAnchorPoint({ x: 0, y: 0 });
+    if(display){
+        props.localAnchorPoint({ x: 0, y: 0 });
+    }
+  }, [props, display]);
 
   useEffect(() => {
     document.addEventListener("click", handleClick);
@@ -25,7 +33,7 @@ const ContextMenu = (props) => {
       const validProps = [];
       let count = 0;
       Object.values(props).forEach((prop) => {
-          if(typeof(prop) === 'function'){
+          if(typeof(prop) === 'function' && Object.keys(props)[count] !== "localAnchorPoint"){
               validProps.push(Object.keys(props)[count]);
           }
           count++;
@@ -64,6 +72,7 @@ const ContextMenu = (props) => {
                     //This is not a error, silly typescript
                     props.[prop]();
                     setAnchorPoint({ x: 0, y: 0 });
+                    props.localAnchorPoint({ x: 0, y: 0 });
                     }}
                 >
                     <p id="context-icon">{optionIcons.get(prop)}</p>

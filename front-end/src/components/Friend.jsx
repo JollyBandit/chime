@@ -14,12 +14,13 @@ export const Friend = (props) => {
             props.clickFriend(props.address)
         }} 
         onContextMenu={(e) => {
-            setAnchorPoint({x: e.pageX, y: e.pageY});
+            setTimeout(() => setAnchorPoint({x: e.pageX, y: e.pageY}), 1);
             e.preventDefault();
         }}
         >
             <ContextMenu 
             anchorPoint={{x: anchorPoint.x, y: anchorPoint.y}} 
+            localAnchorPoint={(ap) => setAnchorPoint(ap)}
             select={() => props.clickFriend(props.address)} 
             send={() => {
                 if(state === 'None'){
