@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import "./App.css";
 import Logo from "./chime.png"
 
@@ -29,6 +29,8 @@ export default function App() {
   const [friendModal, setFriendModal] = useState(false);
 
   const [selectedFriend, setSelectedFriend] = useState({address: "Select A Friend", streamID: ""});
+  const [loaded, setLoaded] = useState(false);
+  const [notifications, setNotifications] = useState([]);
 
   const [messageGuessing, setMessageGuessing] = useState(false);
 
@@ -58,11 +60,16 @@ export default function App() {
   }
 
   async function clickFriend(address){
-    //Clear Messages
-    setMessages([])
+    //Unsubscribe to last friend before selecting next friend (to prevent duplicate messages)
+    selectedFriend.streamID !== "" && await streamr.unsubscribe(selectedFriend.streamID);
+    setMessages([]);
+    setLoaded(false);
+    notifications.forEach(notification => {
+      notification.close();
+    });
     const storageKey = "chime-friends-" + address;
     setSelectedFriend(JSON.parse(window.localStorage.getItem(storageKey)));
-    await streamr.getStream(account.toLowerCase() + "/chime-messages/" + address)
+    streamr.getStream(account.toLowerCase() + "/chime-messages/" + address)
     //Owner stream exists
     .then(async (stream) => {
       console.log("Owner's stream exists " + stream);
@@ -86,6 +93,13 @@ export default function App() {
         setSelectedFriend((oldObj) => ({...oldObj, streamID: stream.id}))
       })
     })
+    //Check if user has browser notifications toggled on
+    if(Notification.permission === "default"){
+      Notification.requestPermission()
+      .then((e) => {
+        console.log(Notification.permission);
+      })
+    }
   }
 
   const grantPermissions = async (_stream, _address) => {
@@ -134,15 +148,48 @@ export default function App() {
   useEffect(() => {
     async function loadMessages() {
       try {
-        //Load the last 50 messages from previous session
+        let timeoutID;
+        const dataArr = [];
+        const stream = await streamr.getStream(selectedFriend.streamID);
+        const storageNodes = await stream.getStorageNodes();
+        //Load the last 50 messages from previous session if messages are being stored
+        if(storageNodes.length !== 0){
+          await streamr.resend(
+            {
+              stream: selectedFriend.streamID,
+              resend: {
+                last: 50,
+              },
+            }, (data) => {
+              //Collect all data
+              dataArr.push(data);
+              //Reset timer if all data hasn't been gathered yet
+              if(timeoutID)
+              clearInterval(timeoutID);
+              timeoutID = setTimeout(() => {
+                //Load messages after all data has been collected
+                setMessages((oldArr) => [...oldArr, ...dataArr]);
+              }, 100);
+            }
+          )
+          setLoaded(true);
+        }
+        //Messages are not stored, but we will still load
+        else{
+          setLoaded(true);
+        }
+        //Subscribe to stream after messages were resent
         streamr.subscribe(
           {
             stream: selectedFriend.streamID,
-            resend: {
-              last: 50,
-            },
-          },
-          handleMessages
+          }, (data) => {
+            //Create a new notification if the new message was not sent by us & chime is not visible
+            if(data.sender !== account && document.visibilityState !== "visible"){
+              const notification = new Notification(data.sender + " sent you a message!", {body: data.message, icon: "https://robohash.org/" + data.sender + ".png?set=set5"});
+              setNotifications((oldArr) => [...oldArr, notification]);
+            }
+            setMessages((oldArr) => [...oldArr, data]);
+          }
         )
       } catch (err) {
         console.log(err);
@@ -153,10 +200,6 @@ export default function App() {
       loadMessages();
     }
   }, [account, selectedFriend]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleMessages = useCallback((message) => {
-    setMessages((oldArr) => [...oldArr, {...message}]);
-  }, [])
 
   const addMessage = async (messageText, messageDate) => {
     try{
@@ -216,8 +259,14 @@ export default function App() {
       "The client has been disconnected"
     );
     setMessages([]);
+    setFriends([]);
+    setLoaded(false);
+    notifications.forEach(notification => {
+      notification.close();
+    });
+    setSelectedFriend({address: "Select A Friend", streamID: ""});
     if(streamr){
-      streamr.getSubscriptions()[0].unsubscribe()
+      streamr.getSubscriptions().forEach((sub) => sub.unsubscribe());
       streamr.disconnect()
     }
     // if(disableMessageSharing){
@@ -297,6 +346,7 @@ export default function App() {
                 return (
                   <Friend
                     key={Math.random()}
+                    selected={selectedFriend.address === friend.address}
                     address={friend.address}
                     streamID={friend.streamID}
                     clickFriend={(address) => clickFriend(address)}
@@ -344,7 +394,7 @@ export default function App() {
               {messages.map((message) => {
                 return (
                   <Message
-                    key={message.date}
+                    key={Math.random()}
                     postedData={message}
                     userAddress={account}
                     clickMessage={(msg) => clickMessage(msg)}
@@ -356,7 +406,7 @@ export default function App() {
             </div>
           </div>
           <SendMessage
-            disabled={selectedFriend.streamID === "" ? true : false}
+            disabled={!loaded}
             sendMessage={(messageText, messageDate) =>
               addMessage(messageText, messageDate)
             }
