@@ -1,3 +1,6 @@
+# Deprecation Warning
+Chime is rebranding to Hypha and is getting an upgrade to NextJS. This repository is no longer maintained. Please see https://gitlab.com/hypha-link for the current version of Hypha.
+
 # Chime
 
 A Decentralized Peer-to-Peer Social Communications Network
